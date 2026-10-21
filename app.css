@@ -1,0 +1,133 @@
+.aura-motion-editor { --aura-motion-border: var(--border, #dedee7); --aura-motion-muted: var(--muted-foreground, #777784); color: var(--foreground); background: var(--background); font: inherit; padding: 28px; container-type: inline-size; overflow-y: auto; height: 100%; box-sizing: border-box; }
+.aura-motion-editor * { box-sizing: border-box; }
+.aura-motion-intro { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+.aura-motion-eyebrow { font-size: 10px; letter-spacing: .16em; color: var(--aura-motion-muted); font-weight: 600; margin: 0 0 12px; }
+.aura-motion-intro h2 { font-size: 23px; line-height: 1.3; letter-spacing: -.035em; font-weight: 550; margin: 0 0 10px; }
+.aura-motion-intro p:not(.aura-motion-eyebrow) { font-size: 13px; line-height: 1.6; color: var(--aura-motion-muted); margin: 0; }
+.aura-motion-switch { display: flex; gap: 8px; align-items: center; font-size: 12px; white-space: nowrap; padding-top: 5px; }
+.aura-motion-editor input { accent-color: var(--primary, #8581dd); }
+.aura-motion-layout { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(210px, 1fr); gap: 28px; align-items: start; }
+.aura-motion-preview-wrap { min-width: 0; position: sticky; top: 0; }
+.aura-motion-preview-scene { border: 1px solid var(--aura-motion-border); border-radius: 16px; min-height: 420px; overflow: hidden; display: flex; flex-direction: column; background: var(--background); }
+.aura-motion-preview-label { display: flex; align-items: center; gap: 7px; font-size: 9px; letter-spacing: .13em; color: var(--aura-motion-muted); padding: 20px; }
+.aura-motion-live-dot { width: 5px; height: 5px; border-radius: 50%; background: #8581dd; }
+.aura-motion-preview-conversation { padding: 80px 24px 45px; text-align: center; flex: 1; }
+.aura-motion-preview-greeting { font-size: 21px; letter-spacing: -.04em; font-weight: 500; }
+.aura-motion-preview-conversation > p { font-size: 12px; color: var(--aura-motion-muted); line-height: 1.65; max-width: 270px; margin: 12px auto 25px; }
+.aura-motion-preview-composer { background: var(--background); border: 1px solid var(--aura-motion-border); border-radius: 12px; padding: 14px; text-align: left; color: var(--aura-motion-muted); font-size: 11px; box-shadow: 0 4px 16px #00000007; }
+.aura-motion-preview-composer > div { display: flex; justify-content: space-between; align-items: center; margin-top: 25px; font-size: 17px; }
+.aura-motion-preview-send { background: var(--primary, #8581dd); color: var(--primary-foreground, white); width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center; }
+.aura-motion-preview-footnote { font-size: 8px; letter-spacing: .18em; color: var(--aura-motion-muted); text-align: center; padding: 15px; opacity: .65; }
+.aura-motion-caption { font-size: 11px; line-height: 1.65; color: var(--aura-motion-muted); margin: 13px 3px 0; }
+.aura-motion-controls { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.aura-motion-field { display: flex; flex-direction: column; gap: 10px; }
+.aura-motion-field-title { font-size: 12px; font-weight: 550; display: flex; justify-content: space-between; align-items: center; }
+.aura-motion-field-title span, .aura-motion-field-title output { color: var(--aura-motion-muted); font-size: 11px; font-weight: 400; }
+.aura-motion-field-help { display: block; color: var(--aura-motion-muted); font-size: 10px; line-height: 1.45; margin-top: -4px; }
+.aura-motion-segmented { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+.aura-motion-segmented button { min-width: 0; min-height: 35px; border: 1px solid var(--aura-motion-border); background: var(--background); color: var(--aura-motion-muted); border-radius: 6px; padding: 7px 5px; font-size: 11px !important; overflow-wrap: anywhere; }
+.aura-motion-segmented button:hover { background: var(--muted); color: var(--foreground); }
+.aura-motion-segmented button[aria-pressed="true"] { background: var(--primary, #8581dd); border-color: var(--primary, #8581dd); color: var(--primary-foreground, white); }
+.aura-motion-controls select { width: 100%; min-height: 37px; font: inherit; font-size: 12px; background: var(--background); color: var(--foreground); border: 1px solid var(--aura-motion-border); border-radius: 8px; padding: 7px 10px; }
+.aura-motion-editor button { cursor: pointer; font: inherit; }
+.aura-motion-editor button:disabled, .aura-motion-editor fieldset:disabled { opacity: .5; cursor: default; }
+.aura-motion-editor :is(button, input, select):focus-visible { outline: 2px solid var(--primary, #8581dd); outline-offset: 3px; }
+.aura-motion-upload { border: 1px dashed var(--aura-motion-border); border-radius: 10px; background: transparent; color: var(--foreground); padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 7px; }
+.aura-motion-upload:hover { background: var(--muted); border-color: var(--primary, #8581dd); }
+.aura-motion-upload-icon { color: var(--aura-motion-muted); font-size: 24px; }
+.aura-motion-upload strong { font-size: 12px; font-weight: 500; }
+.aura-motion-upload > span:last-child { color: var(--aura-motion-muted); font-size: 10px; }
+.aura-motion-file { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 11px; }
+.aura-motion-file > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aura-motion-file button { border: 0; background: none; color: var(--aura-motion-muted); padding: 4px; font-size: 11px; }
+.aura-motion-actions { border-top: 1px solid var(--aura-motion-border); padding-top: 20px; margin-top: 26px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.aura-motion-actions > span { flex: 1; color: var(--aura-motion-muted); font-size: 11px; }
+.aura-motion-reset { background: none; color: var(--aura-motion-muted); border: 0; padding: 8px 0; font-size: 12px !important; }
+.aura-motion-apply { background: var(--primary, #8581dd); color: var(--primary-foreground, white); border: 0; border-radius: 8px; padding: 10px 16px; font-size: 12px !important; font-weight: 500 !important; }
+.aura-motion-error { border: 1px solid var(--destructive, #b42318); padding: 10px 12px; border-radius: 8px; font-size: 12px; color: var(--destructive, #b42318); }
+.aura-motion-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+@container (max-width: 580px) { .aura-motion-layout { grid-template-columns: 1fr; gap: 24px; } .aura-motion-preview-wrap { position: static; } .aura-motion-preview-scene { min-height: 280px; } .aura-motion-preview-conversation { padding: 38px 24px 20px; } .aura-motion-intro h2 { font-size: 20px; } .aura-motion-intro { flex-wrap: wrap; gap: 12px; } }
+@media (max-width: 520px) { .aura-motion-editor { padding: 18px; } }
+.aura-motion-scope { display:flex; gap:10px; align-items:flex-start; font-size:12px; padding-bottom:16px; border-bottom:1px solid var(--aura-motion-border); }
+.aura-motion-scope input { margin-top:3px; }
+.aura-motion-scope strong { display:block; font-weight:550; }
+.aura-motion-scope small { display:block; color:var(--aura-motion-muted); font-size:11px; line-height:1.5; margin-top:5px; }
+.aura-motion-library { border-top:1px solid var(--aura-motion-border); margin-top:26px; padding-top:22px; }
+.aura-motion-library-heading { display:flex; flex-wrap:wrap; gap:8px 16px; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.aura-motion-library-heading h3 { margin:0; font-size:14px; font-weight:550; }
+.aura-motion-library-heading > span { font-size:11px; color:var(--aura-motion-muted); }
+.aura-motion-slots { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.aura-motion-slot { border:1px solid var(--aura-motion-border); border-radius:10px; overflow:hidden; min-width:0; }
+.aura-motion-slot[data-active] { border-color:var(--primary); box-shadow:0 0 0 1px var(--primary); }
+.aura-motion-slot-use { padding:10px; border:0; background:transparent; color:inherit; width:100%; text-align:left; display:flex; flex-direction:column; gap:6px; }
+.aura-motion-slot-art { width:100%; aspect-ratio:2; border-radius:5px; overflow:hidden; display:block; background:var(--muted); }
+.aura-motion-slot-art img { width:100%; height:100%; object-fit:cover; }
+.aura-motion-slot-pixels { display:block; width:100%; height:100%; background:radial-gradient(#5e6ad2 1px,transparent 1px) 0 0/6px 6px; mask-image:linear-gradient(150deg,#000,transparent); }
+.aura-motion-slot-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; font-size:12px; }
+.aura-motion-slot-use small { color:var(--aura-motion-muted); font-size:10px; }
+.aura-motion-slot-empty { justify-content:center; align-items:center; min-height:135px; color:var(--aura-motion-muted); }
+.aura-motion-slot-empty > span { font-size:24px; font-weight:300; }
+.aura-motion-slot-empty strong { font-size:12px; font-weight:450; }
+.aura-motion-slot-clear { width:100%; border:0; border-top:1px solid var(--aura-motion-border); background:transparent; color:var(--aura-motion-muted); font-size:10px !important; padding:5px; }
+.aura-motion-slot-save { display:flex; align-items:end; flex-wrap:wrap; gap:10px; margin-top:18px; }
+.aura-motion-slot-save label { flex:1; min-width:110px; display:flex; flex-direction:column; gap:6px; font-size:11px; }
+.aura-motion-slot-save :is(select,input) { width:100%; min-height:36px; font:inherit; background:var(--background); color:var(--foreground); border:1px solid var(--aura-motion-border); border-radius:7px; padding:7px; }
+.aura-motion-save-slot { background:var(--muted); color:var(--foreground); border:1px solid var(--aura-motion-border); border-radius:7px; min-height:36px; padding:7px 12px; font-size:12px !important; }
+@container (max-width:380px) { .aura-motion-slots { grid-template-columns:repeat(2,minmax(0,1fr)); } .aura-motion-save-slot { width:100%; } }
+
+.aura-motion-overview-setting { margin: 0 0 24px; }
+.aura-motion-activity-slot[hidden] { display: none; }
+[data-testid="plugin-homepage-sections"] > section:has(.aura-motion-activity-slot[hidden]) { display: none; }
+[data-testid="plugin-homepage-sections"]:has(> section:only-child .aura-motion-activity-slot[hidden]) { display: none; }
+.aura-motion-activity { --activity-active: #438966; color: var(--foreground); font: inherit; font-size: 13px; width: 100%; max-width: 760px; margin: auto; border-top: 1px solid var(--border); padding-top: 18px; min-width: 0; }
+.dark .aura-motion-activity { --activity-active: #70b594; }
+.aura-motion-activity * { box-sizing: border-box; }
+.aura-motion-activity .overview-header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:20px; }
+.aura-motion-activity .overview-header h2 { font-size:14px; font-weight:600; margin:0; }
+.aura-motion-activity .overview-header p { font-size:11px; color:var(--muted-foreground); margin:3px 0 0; overflow-wrap:anywhere; }
+.aura-motion-activity .filters { display:flex; gap:7px; align-items:center; flex-wrap:wrap; min-width:0; font-size:11px; }
+.aura-motion-activity :is(select,button) { border:1px solid var(--border); background:var(--background); color:var(--foreground); border-radius:6px; padding:5px 9px; font:inherit; font-size:11px; cursor:pointer; }
+.aura-motion-activity .filters select { max-width:220px; min-width:0; }
+.aura-motion-activity :is(select,button,a,[tabindex]):focus-visible { outline:2px solid var(--ring,var(--primary)); outline-offset:3px; }
+.aura-motion-activity .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); padding-bottom:20px; border-bottom:1px solid var(--border); }
+.aura-motion-activity .stat { padding-left:20px; border-left:1px solid var(--border); min-width:0; }
+.aura-motion-activity .stat:first-child { padding-left:0; border:0; }
+.aura-motion-activity .stat :is(span,small) { display:block; font-size:11px; color:var(--muted-foreground); }
+.aura-motion-activity .stat strong { display:block; font-weight:500; font-size:24px; letter-spacing:-.03em; font-variant-numeric:tabular-nums; margin-top:3px; }
+.aura-motion-activity .activity-body { display:grid; grid-template-columns:minmax(0,1fr) 180px; gap:28px; padding:18px 0; }
+.aura-motion-activity .activity-body > section { min-width:0; }
+.aura-motion-activity h3 { font-size:12px; font-weight:500; margin:0 0 14px; }
+.aura-motion-activity .calendar-region { overflow-x:auto; min-width:0; padding:2px 0 6px; scrollbar-width:thin; }
+.aura-motion-activity .calendar { display:grid; grid-template-rows:repeat(7,7px); grid-auto-columns:7px; grid-auto-flow:column; gap:3px; width:max-content; }
+.aura-motion-activity .day { height:7px; width:7px; border-radius:1px; background:var(--border); }
+.aura-motion-activity .calendar-spacer { visibility:hidden; }
+.aura-motion-activity .day[data-level="1"] { background:color-mix(in srgb,var(--activity-active) 26%,var(--border)); }
+.aura-motion-activity .day[data-level="2"] { background:color-mix(in srgb,var(--activity-active) 48%,var(--border)); }
+.aura-motion-activity .day[data-level="3"] { background:color-mix(in srgb,var(--activity-active) 73%,var(--border)); }
+.aura-motion-activity .day[data-level="4"] { background:var(--activity-active); }
+.aura-motion-activity .calendar-caption { display:flex; justify-content:space-between; gap:10px; font-size:10px; color:var(--muted-foreground); margin-top:8px; }
+.aura-motion-activity .patterns dl { margin:0; }
+.aura-motion-activity .patterns dl div { display:flex; justify-content:space-between; gap:10px; font-size:11px; margin-bottom:10px; }
+.aura-motion-activity .patterns dt { color:var(--muted-foreground); }
+.aura-motion-activity .patterns dd { margin:0; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.aura-motion-activity .provenance { border-top:1px solid var(--border); padding-top:12px; font-size:10px; color:var(--muted-foreground); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.aura-motion-activity .provenance a { color:var(--primary); margin-left:12px; white-space:nowrap; }
+.aura-motion-activity .notice { margin:0 0 16px; font-size:12px; color:var(--muted-foreground); overflow-wrap:anywhere; }
+.aura-motion-activity .notice button { margin-left:8px; }
+.aura-motion-activity .source-notes { font-size:11px; color:var(--muted-foreground); margin-bottom:12px; }
+.aura-motion-activity .source-notes p { margin:0 0 6px; }
+.aura-motion-activity .legend { display:flex; gap:3px; align-items:center; }
+.aura-motion-activity .legend i { display:block; width:7px; height:7px; border-radius:1px; background:var(--activity-active); }
+.aura-motion-activity .legend i:first-of-type { background:var(--border); }
+@container page (max-width:650px) {
+  .aura-motion-activity .overview-header { align-items:start; flex-direction:column; gap:10px; }
+  .aura-motion-activity .activity-body { grid-template-columns:1fr; gap:18px; }
+  .aura-motion-activity .patterns dl { display:grid; grid-template-columns:1fr 1fr; gap:0 20px; }
+  .aura-motion-activity .patterns dl div { flex-wrap:wrap; }
+  .aura-motion-activity .stats { row-gap:16px; grid-template-columns:1fr 1fr; }
+  .aura-motion-activity .stat { padding-left:16px; }
+  .aura-motion-activity .stat:nth-child(3) { border:0; padding-left:0; }
+  .aura-motion-activity .filters { width:100%; }
+  .aura-motion-activity .filters select { flex:1; max-width:100%; width:0; }
+  .aura-motion-activity .stat strong { font-size:22px; }
+}
