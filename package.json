@@ -1,7 +1,7 @@
 {
   "name": "bb-plugin-aura-motion",
-  "version": "0.1.0",
-  "description": "Animated GIF and photo backgrounds with selectable dither textures for BB. Based on Aura by Mateo Cerquetella.",
+  "version": "0.2.0",
+  "description": "Video, animated GIF and photo wallpapers with selectable dither textures for BB. Based on Aura by Mateo Cerquetella.",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -11,7 +11,7 @@
   },
   "bb": {
     "name": "Aura Motion",
-    "description": "Animated GIF and photo backgrounds, seven dither patterns, six saved slots, and an optional activity overview.",
+    "description": "Video, animated GIF and photo wallpapers, seven dither patterns, six saved slots, and an optional activity overview.",
     "branding": {
       "icon": "./assets/icon.svg"
     },

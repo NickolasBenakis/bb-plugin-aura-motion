@@ -1,6 +1,6 @@
 # Aura Motion
 
-Animated GIF and photo backgrounds for BB, with Capy's dithering effect, seven
+Video, animated GIF and photo backgrounds for BB, with Capy's dithering effect, seven
 texture patterns, five photo motions, four dither styles, six saved slots, and an
 optional GitHub activity overview. Open **Settings → Aura Motion Motion**, or
 **+ → Actions → Aura Motion** in a thread panel.
@@ -65,6 +65,10 @@ Select **Apply background** to save the setting.
 
 - Choose or drop a PNG/JPG (up to 32 MB). Large images are resized automatically
   to fit the 2 MB stored-image limit. The preview shows the result before saving.
+- Or choose an MP4 (H.264) or WebM video, up to 24 MB and 4,096 px per side —
+  a 4K loop fits easily. Videos play muted and looped, and pause while hidden,
+  off-screen or under reduced motion. Choose **No texture** to show the video
+  exactly as encoded; with Capy dithering it becomes the shader's texture.
 - Or choose an animated GIF (up to 8 MB and 4,096 px per side). GIFs are stored as uploaded — resizing
   would drop their animation — and play frame by frame through Capy dithering.
   With **No texture**, the browser plays the GIF directly.
@@ -97,7 +101,7 @@ Requires BB 0.40+ and SDK 0.4.21+. Uninstall Aura first if you use it
 (`bb plugin remove aura`; this deletes Aura's saved slots).
 
 ```sh
-bb plugin install git:https://github.com/NickolasBenakis/bb-plugin-aura-motion.git@^0.1.0
+bb plugin install git:https://github.com/NickolasBenakis/bb-plugin-aura-motion.git@^0.2.0
 ```
 
 From a checkout:

@@ -1,6 +1,7 @@
 import { VERTEX_SHADER, DITHERING_SHADER } from "./capy-shaders.ts";
 import { ANIMATED_PHOTO_SHADER, patternUniforms } from "./photo-shader.ts";
-import { isAnimatedImage, type BackgroundSettings } from "./model.ts";
+import { isAnimatedImage, isVideo, type BackgroundSettings } from "./model.ts";
+import { mountVideo, type VideoWallpaper } from "./video.ts";
 import { openAnimatedImage, type FramePlayer } from "./animated-image.ts";
 
 export const CAPY_CSS = `
@@ -9,6 +10,7 @@ export const CAPY_CSS = `
 .aura-motion-capy-air { background:linear-gradient(180deg in oklab, var(--aura-motion-panel, #f9fafc) 0%, var(--background, #fff) 100%); }
 .aura-motion-capy-ink { background-position:center; background-repeat:no-repeat; background-size:var(--aura-motion-fit, cover); }
 
+.aura-motion-capy-ink video { display:block; position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
 .aura-motion-capy-ink canvas { display:block; position:absolute; inset:0; width:100%; height:100%; image-rendering:pixelated; }
 .aura-motion-capy-focus { position:absolute; top:46%; left:50%; width:1360px; height:680px; transform:translate(-50%,-50%); }
 .aura-motion-capy-focus::after { content:""; position:absolute; inset:160px; border-radius:48px; background:rgba(255,255,255,.88); filter:blur(88px); }
@@ -40,7 +42,7 @@ export function shaderSettingsChanged(previous: BackgroundSettings, next: Backgr
 
 /** A still photo with no texture motion only needs redrawing on resize. */
 export function shaderAnimates(settings: BackgroundSettings, imageUrl: string | null): boolean {
-  return !imageUrl || settings.photoMotion !== "still" || isAnimatedImage(imageUrl);
+  return !imageUrl || settings.photoMotion !== "still" || isAnimatedImage(imageUrl) || isVideo(imageUrl);
 }
 
 export function frameIsDue(lastDraw: number | null, now: number, fps: BackgroundSettings["fps"]): boolean {
@@ -69,6 +71,8 @@ export function mountCapyEffect(parent: HTMLElement, initial: BackgroundSettings
   let settings = initial;
   let currentImage: string | null | undefined;
   let disposeShader = () => {};
+  let video: VideoWallpaper | null = null;
+  let videoUrl: string | null = null;
   let stopped = false;
   const theme = new MutationObserver(() => update(settings, currentImage ?? null, true));
   theme.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "style", "data-color-theme", "data-theme"] });
@@ -88,22 +92,28 @@ export function mountCapyEffect(parent: HTMLElement, initial: BackgroundSettings
     focus.style.opacity = "0";
     if (settings.dimmerEnabled && !conversation) ink.dataset.halfWallpaper = "";
     else delete ink.dataset.halfWallpaper;
-    if (image) { ink.dataset.image = ""; ink.style.backgroundImage = `url("${image}")`; }
-    else { delete ink.dataset.image; ink.style.backgroundImage = "none"; }
+    const playing = settings.enabled && isVideo(image) ? image : null;
+    if (playing !== videoUrl) {
+      // A new video (or none) forces a new shader texture source too.
+      video?.dispose(); video = playing ? mountVideo(ink, playing, settings.fit) : null; videoUrl = playing; refresh = true;
+    }
+    video?.setFit(settings.fit);
+    if (image && !isVideo(image)) { ink.dataset.image = ""; ink.style.backgroundImage = `url("${image}")`; }
+    else { if (image) ink.dataset.image = ""; else delete ink.dataset.image; ink.style.backgroundImage = "none"; }
     if (image !== currentImage || refresh || shaderSettingsChanged(previous, settings)) {
       currentImage = image;
       disposeShader(); disposeShader = () => {};
       if (settings.enabled && settings.effect === "pixels") {
         const color = settings.tint === "theme" ? getComputedStyle(parent).getPropertyValue("--primary").trim() || "#5e6ad2" : dark ? "#606acc" : "#5e6ad2";
-        disposeShader = mountShader(ink, image, color, settings);
+        disposeShader = mountShader(ink, image, color, settings, video?.element ?? null);
       }
     }
   }
   update(initial, imageUrl);
-  return { update, dispose() { if (stopped) return; stopped = true; theme.disconnect(); disposeShader(); layer.remove(); } };
+  return { update, dispose() { if (stopped) return; stopped = true; theme.disconnect(); disposeShader(); video?.dispose(); video = null; layer.remove(); } };
 }
 
-function mountShader(parent: HTMLElement, imageUrl: string | null, color: string, settings: BackgroundSettings): () => void {
+function mountShader(parent: HTMLElement, imageUrl: string | null, color: string, settings: BackgroundSettings, video: HTMLVideoElement | null): () => void {
   const canvas = document.createElement("canvas");
   const gl = canvas.getContext("webgl2", { alpha:true, antialias:false, depth:false, stencil:false, premultipliedAlpha:true, preserveDrawingBuffer:false });
   if (!gl) return () => {}; // Keep the source image/gradient when WebGL is unavailable.
@@ -190,7 +200,10 @@ function mountShader(parent: HTMLElement, imageUrl: string | null, color: string
     // A due GIF frame draws immediately so the FPS cap never drops its frames.
     const gifFrame = player?.advance(now) ?? null;
     if (gifFrame) upload(gifFrame);
-    if (gifFrame || frameIsDue(lastDraw, now, settings.fps)) draw(now);
+    const due = frameIsDue(lastDraw, now, settings.fps);
+    // Re-upload the video only when it has a frame the texture has not seen.
+    if (video && texture && due && videoFrameDirty && video.readyState >= 2) { upload(video); videoFrameDirty = !frameCallbacks; }
+    if (gifFrame || due) draw(now);
     raf = requestAnimationFrame(tick);
   }
   function schedule() {
@@ -231,7 +244,21 @@ function mountShader(parent: HTMLElement, imageUrl: string | null, color: string
     image.onerror = () => { canvas.style.visibility = "hidden"; };
     image.src = url;
   }
-  if (imageUrl && isAnimatedImage(imageUrl)) {
+  let videoFrameDirty = true;
+  let frameCallback = 0;
+  const frameCallbacks = Boolean(video && "requestVideoFrameCallback" in video);
+  function onVideoFrame(): void {
+    videoFrameDirty = true;
+    if (!disposed && video) frameCallback = video.requestVideoFrameCallback(onVideoFrame);
+  }
+  function onVideoData(): void {
+    if (disposed || lost || !video || texture) return;
+    useTexture(video, video.videoWidth || 1, video.videoHeight || 1);
+    if (frameCallbacks) frameCallback = video.requestVideoFrameCallback(onVideoFrame);
+  }
+  if (video) {
+    if (video.readyState >= 2) onVideoData(); else video.addEventListener("loadeddata", onVideoData);
+  } else if (imageUrl && isAnimatedImage(imageUrl)) {
     openAnimatedImage(imageUrl, loading.signal).then(opened => {
       if (!opened) { if (!disposed) loadStill(imageUrl); return; } // No WebCodecs: show the first frame.
       if (disposed || lost) { opened.dispose(); return; }
@@ -258,6 +285,7 @@ function mountShader(parent: HTMLElement, imageUrl: string | null, color: string
     canvas.removeEventListener("webglcontextlost",onLost);
     if (image) { image.onload = null; image.onerror = null; image.src = ""; }
     loading.abort(); player?.dispose(); player = null;
+    if (video) { video.removeEventListener("loadeddata", onVideoData); if (frameCallback) video.cancelVideoFrameCallback(frameCallback); }
     releaseGl(); gl!.getExtension("WEBGL_lose_context")?.loseContext(); canvas.remove();
   };
 }

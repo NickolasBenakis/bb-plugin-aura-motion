@@ -4,9 +4,13 @@ export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 // GIFs are stored as uploaded: resizing through a canvas would drop every
 // frame after the first, so they get a larger, fixed budget instead.
 export const MAX_GIF_BYTES = 8 * 1024 * 1024;
-// Stills are resized to this size; GIFs cannot be, so they must already fit
+// Stills are resized to this size; GIFs and videos cannot be, so they must already fit
 // within it to stay inside common GPU texture limits and frame memory.
-export const MAX_GIF_SIDE = 4096;
+export const MAX_ANIMATED_SIDE = 4096;
+// Videos are stored as uploaded too. An encoded MP4/WebM loop is far smaller
+// than a GIF of the same resolution, so 4K stays within this budget.
+export const MAX_VIDEO_BYTES = 24 * 1024 * 1024;
+export const VIDEO_TYPES = ["video/mp4", "video/webm"] as const;
 export const MAX_UPLOAD_BYTES = 32 * 1024 * 1024;
 export const SLOT_COUNT = 6;
 export const PATTERNS = ["noise", "warp", "dots", "wave", "ripple", "swirl", "sphere"] as const;
@@ -36,7 +40,7 @@ export const defaults: BackgroundSettings = {
 };
 export const imageInfoSchema = z.object({
   version: z.string().regex(/^[a-f0-9]{24}$/), name: z.string().max(160),
-  mime: z.enum(["image/png", "image/jpeg", "image/gif"]), bytes: z.number().int().min(1).max(MAX_GIF_BYTES),
+  mime: z.enum(["image/png", "image/jpeg", "image/gif", ...VIDEO_TYPES]), bytes: z.number().int().min(1).max(MAX_VIDEO_BYTES),
 });
 export const slotNumberSchema = z.number().int().min(1).max(SLOT_COUNT);
 export const slotSchema = z.object({
@@ -50,7 +54,7 @@ export const snapshotSchema = z.object({
 export type Snapshot = z.infer<typeof snapshotSchema>;
 export const uploadSchema = z.object({
   name: z.string().trim().min(1).max(160),
-  dataUrl: z.string().max(Math.ceil(MAX_GIF_BYTES / 3) * 4 + 40),
+  dataUrl: z.string().max(Math.ceil(MAX_VIDEO_BYTES / 3) * 4 + 40),
 }).strict();
 export const applySchema = z.object({
   settings: settingsSchema,
@@ -66,8 +70,13 @@ export const CHANGED = "aura-motion-changed";
 export function imageUrl(image: Snapshot["image"]): string | null {
   // The type hint lets the renderer pick the animated path without fetching
   // first; the server ignores it and serves the stored type.
-  return image ? `/api/v1/plugins/aura-motion/http/image?v=${image.version}${image.mime === "image/gif" ? "&type=gif" : ""}` : null;
+  if (!image) return null;
+  const hint = image.mime === "image/gif" ? "&type=gif" : image.mime.startsWith("video/") ? "&type=video" : "";
+  return `/api/v1/plugins/aura-motion/http/image?v=${image.version}${hint}`;
 }
 export function isAnimatedImage(url: string | null): boolean {
   return url !== null && (url.startsWith("data:image/gif;") || url.endsWith("&type=gif"));
+}
+export function isVideo(url: string | null): boolean {
+  return url !== null && (url.startsWith("data:video/") || url.endsWith("&type=video"));
 }

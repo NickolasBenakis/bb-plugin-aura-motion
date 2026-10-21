@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { definePluginApp, useRealtime, useRpc } from "@get-bb/plugin-sdk/app";
 import type { rpcContract } from "./server.ts";
-import { CHANGED, defaults, imageUrl, isAnimatedImage, SLOT_COUNT, type BackgroundSettings, type Snapshot } from "./lib/model.ts";
+import { CHANGED, defaults, imageUrl, isAnimatedImage, isVideo, SLOT_COUNT, type BackgroundSettings, type Snapshot } from "./lib/model.ts";
 import { backgroundRules, mountBackground, notifyChange } from "./lib/background.ts";
 import { CAPY_CSS, mountCapyEffect, type CapyEffect } from "./lib/capy-effect.ts";
 import { readImage } from "./lib/upload.ts";
@@ -68,7 +68,7 @@ export function BackgroundEditor() {
       const { dataUrl, resized } = await readImage(file);
       if (!mounted.current || generation !== picking.current) return;
       setUpload({ name: file.name.slice(0, 160), dataUrl }); setRemove(false);
-      dirty.current = true; setStatus(resized ? "Image resized and ready — apply to save" : isAnimatedImage(dataUrl) ? "Animated GIF ready — apply to save" : "Image ready — apply to save");
+      dirty.current = true; setStatus(resized ? "Image resized and ready — apply to save" : isVideo(dataUrl) ? "Video ready — apply to save" : isAnimatedImage(dataUrl) ? "Animated GIF ready — apply to save" : "Image ready — apply to save");
     } catch (cause) { if (mounted.current) setError(message(cause)); }
     finally { saving.current = false; if (mounted.current) setBusy(false); }
   }
@@ -149,13 +149,13 @@ export function BackgroundEditor() {
           <label className="aura-motion-scope"><input type="checkbox" aria-label="New thread screen only" aria-describedby={`${id}-scope-help`} checked={draft.newThreadOnly} onChange={e => change("newThreadOnly", e.target.checked)} /><span><strong>New thread screen only</strong><small id={`${id}-scope-help`}>Hide Aura Motion inside existing conversations.</small></span></label>
           <label className="aura-motion-scope"><input type="checkbox" aria-label="Half wallpaper on New thread" checked={draft.dimmerEnabled} onChange={e => change("dimmerEnabled", e.target.checked)} /><span><strong>Half wallpaper on New thread</strong><small>On: wallpaper fades out halfway down. Off: full wallpaper. Chats always use full wallpaper.</small></span></label>
           <div className="aura-motion-field">
-            <span className="aura-motion-field-title">Your image <span>optional</span></span>
+            <span className="aura-motion-field-title">Your image or video <span>optional</span></span>
             <button type="button" className="aura-motion-upload" onClick={() => fileInput.current?.click()} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); void choose(e.dataTransfer.files[0]); }}>
               <span className="aura-motion-upload-icon" aria-hidden="true">↥</span>
-              <strong>{imageName ? "Replace image" : "Choose an image"}</strong>
-              <span>or drop a PNG / JPG (up to 32 MB, resized automatically) or an animated GIF (up to 8 MB)</span>
+              <strong>{imageName ? "Replace" : "Choose an image or video"}</strong>
+              <span>or drop a PNG / JPG (up to 32 MB, resized automatically), an animated GIF (up to 8 MB), or an MP4 / WebM video (up to 24 MB, 4K)</span>
             </button>
-            <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/gif" aria-label="Upload background image" className="aura-motion-sr-only" onChange={e => { void choose(e.target.files?.[0]); e.target.value = ""; }} />
+            <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/gif,video/mp4,video/webm" aria-label="Upload background image" className="aura-motion-sr-only" onChange={e => { void choose(e.target.files?.[0]); e.target.value = ""; }} />
             {imageName && <div className="aura-motion-file"><span title={imageName}>{imageName}</span><button type="button" onClick={() => { setUpload(null); setRemove(true); dirty.current = true; setStatus("Unsaved changes"); }}>Remove</button></div>}
           </div>
           <div className="aura-motion-field"><label className="aura-motion-field-title" htmlFor={`${id}-effect`}>Texture</label><select id={`${id}-effect`} value={draft.effect} onChange={e => change("effect", e.target.value as BackgroundSettings["effect"])}><option value="pixels">Capy dithering</option><option value="none">No texture</option></select></div>
@@ -180,7 +180,7 @@ export function BackgroundEditor() {
             const active = snapshot?.activeSlot === number;
             return <div className="aura-motion-slot" key={number} data-active={active ? "true" : undefined}>
               {saved ? <button type="button" className="aura-motion-slot-use" disabled={busy || !snapshot} aria-label={`Use slot ${number}: ${saved.name}`} onClick={() => void useSlot(number)}>
-                <span className="aura-motion-slot-art">{saved.image ? <img src={imageUrl(saved.image)!} alt="" /> : <span className="aura-motion-slot-pixels" />}</span>
+                <span className="aura-motion-slot-art">{saved.image ? isVideo(imageUrl(saved.image)) ? <video src={`${imageUrl(saved.image)!}#t=0.1`} muted preload="metadata" playsInline aria-hidden="true" /> : <img src={imageUrl(saved.image)!} alt="" /> : <span className="aura-motion-slot-pixels" />}</span>
                 <span className="aura-motion-slot-name">{saved.name}</span><small>{active ? "Active" : `Slot ${number} · Use`}</small>
               </button> : <button type="button" className="aura-motion-slot-use aura-motion-slot-empty" disabled={busy || !snapshot} aria-label={`Choose empty slot ${number}`} onClick={() => { setSlotNumber(number); setSlotName(`Slot ${number}`); }}><span>＋</span><strong>Slot {number}</strong><small>Empty</small></button>}
               {saved && <button type="button" className="aura-motion-slot-clear" disabled={busy} aria-label={`Clear slot ${number}: ${saved.name}`} onClick={() => void useSlot(number, true)}>Clear</button>}

@@ -78,4 +78,6 @@ test("texture changes rebuild the shader; a still photo stops the animation loop
   assert.equal(shaderAnimates(still, "/api/v1/plugins/aura-motion/http/image?v=abc"), false);
   assert.equal(shaderAnimates(still, "/api/v1/plugins/aura-motion/http/image?v=abc&type=gif"), true);
   assert.equal(shaderAnimates(defaults, "/api/v1/plugins/aura-motion/http/image?v=abc"), true);
+  assert.equal(shaderAnimates(still, "/api/v1/plugins/aura-motion/http/image?v=abc&type=video"), true);
+  assert.equal(shaderAnimates(still, "data:video/webm;base64,AAAA"), true);
 });

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0
+
+- Accept MP4 (H.264) and WebM video wallpapers up to 24 MB and 4,096 px per
+  side, so a 4K loop plays in full colour. With No texture the video plays
+  directly; with Capy dithering it becomes the shader's texture, updated once
+  per new video frame.
+- Videos play muted and looped, and pause while the window is hidden, the panel
+  is off-screen, or the system asks for reduced motion.
+- Serve stored media with HTTP byte ranges, so browsers can stream and loop video.
+- Show a video frame as the thumbnail for video slots.
+
 ## 0.1.0
 
 First release of Aura Motion, a fork of Aura 0.2.3 by Mateo Cerquetella.

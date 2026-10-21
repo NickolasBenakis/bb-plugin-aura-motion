@@ -3,6 +3,7 @@ import { defineRpcContract, type BbPluginApi } from "@get-bb/plugin-sdk";
 import { z } from "zod";
 import { CHANGED, defaults, settingsSchema, snapshotSchema, applySchema, slotNumberSchema, type Snapshot, type ApplyInput } from "./lib/model.ts";
 import { decodeImage } from "./lib/image.ts";
+import { parseRange } from "./lib/range.ts";
 import { activityInputSchema, activityResultSchema } from "./lib/activity.ts";
 import { createActivityService } from "./lib/github.ts";
 
@@ -91,12 +92,19 @@ export default function aura(bb: BbPluginApi): void {
     // A saved slot keeps its own image, even when the active image changes.
     const row = db.prepare("SELECT image_info, image_bytes FROM background WHERE json_extract(image_info, '$.version') = ? UNION ALL SELECT image_info, image_bytes FROM aura_slots WHERE json_extract(image_info, '$.version') = ? LIMIT 1").get(version, version) as Stored | undefined;
     if (!row?.image_info || !row.image_bytes) return c.notFound();
-    return new Response(new Uint8Array(row.image_bytes), { headers: {
+    const bytes = new Uint8Array(row.image_bytes.buffer as ArrayBuffer, row.image_bytes.byteOffset, row.image_bytes.byteLength); // A view, not a copy.
+    const headers: Record<string, string> = {
       "Content-Type": JSON.parse(row.image_info).mime, "Cache-Control": "private, max-age=31536000, immutable", "X-Content-Type-Options": "nosniff",
-      "Content-Security-Policy": "default-src 'none'",
+      "Content-Security-Policy": "default-src 'none'", "Accept-Ranges": "bytes",
+    };
+    const range = parseRange(c.req.header("range"), bytes.length);
+    if (range === "unsatisfiable") return new Response(null, { status: 416, headers: { ...headers, "Content-Range": `bytes */${bytes.length}` } });
+    if (!range) return new Response(bytes, { headers: { ...headers, "Content-Length": String(bytes.length) } });
+    return new Response(bytes.subarray(range.start, range.end + 1), { status: 206, headers: {
+      ...headers, "Content-Range": `bytes ${range.start}-${range.end}/${bytes.length}`, "Content-Length": String(range.end - range.start + 1),
     } });
   });
-  const usage = "bb aura-motion status [--json]\nbb aura-motion enable|disable|reset\nbb aura-motion slots\nbb aura-motion use <1-6>\nbb aura-motion new-thread-only on|off\nbb aura-motion overview on|off\nOpen Settings → Aura Motion to upload images, save slots and toggle Activity overview.";
+  const usage = "bb aura-motion status [--json]\nbb aura-motion enable|disable|reset\nbb aura-motion slots\nbb aura-motion use <1-6>\nbb aura-motion new-thread-only on|off\nbb aura-motion overview on|off\nOpen Settings → Aura Motion to upload images or videos, save slots and toggle Activity overview.";
   bb.cli.register({
     name: "aura-motion", summary: "Manage Aura Motion backgrounds and saved slots",
     commands: ["status", "enable", "disable", "reset", "slots", "use", "new-thread-only", "overview"].map(name => ({ name, summary: `Aura Motion ${name}`, usage: `bb aura-motion ${name}` })),

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createFakePluginHost } from "@get-bb/plugin-sdk/testing";
 import plugin from "../server.ts";
-import { defaults, imageUrl, isAnimatedImage, MAX_GIF_BYTES, type Snapshot } from "../lib/model.ts";
+import { defaults, imageUrl, isAnimatedImage, isVideo, MAX_GIF_BYTES, MAX_VIDEO_BYTES, type Snapshot } from "../lib/model.ts";
 import { decodeImage } from "../lib/image.ts";
 const png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=";
 const gif = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
@@ -195,5 +195,47 @@ test("pattern, dither and photo motion persist in saved slots", async () => {
     assert.equal(active.settings.pattern, "swirl");
     assert.equal(active.settings.dither, "random");
     assert.equal(active.settings.photoMotion, "shimmer");
+  } finally { await host.harness.dispose(); }
+});
+
+// Smallest well-formed headers: an ISO `ftyp` box, and an EBML header with DocType "webm".
+const mp4Bytes = Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from("ftypisom", "ascii"), Buffer.from([0, 0, 2, 0]), Buffer.from("isomiso2", "ascii"), Buffer.alloc(40)]);
+const webmBytes = Buffer.from("1a45dfa39f4286810142f7810142f2810442f381084282847765626d4287810442858102", "hex");
+const dataUrlOf = (mime: string, bytes: Buffer) => `data:${mime};base64,${bytes.toString("base64")}`;
+
+test("MP4 and WebM videos are accepted only when their bytes match, within the 24 MB budget", () => {
+  assert.equal(decodeImage(dataUrlOf("video/mp4", mp4Bytes)).mime, "video/mp4");
+  assert.equal(decodeImage(dataUrlOf("video/webm", Buffer.concat([webmBytes, Buffer.alloc(16)]))).mime, "video/webm");
+  assert.throws(() => decodeImage(dataUrlOf("video/mp4", Buffer.concat([webmBytes, Buffer.alloc(16)]))), /do not match/);
+  assert.throws(() => decodeImage(dataUrlOf("video/webm", mp4Bytes)), /do not match/);
+  const heic = Buffer.from(mp4Bytes); heic.write("heic", 8, "ascii"); heic.write("mif1heic", 16, "ascii");
+  assert.throws(() => decodeImage(dataUrlOf("video/mp4", heic)), /do not match/); // same box, not a video brand
+  const compatible = Buffer.from(mp4Bytes); compatible.write("qt  ", 8, "ascii"); compatible.write("qt  mp42", 16, "ascii");
+  assert.equal(decodeImage(dataUrlOf("video/mp4", compatible)).mime, "video/mp4"); // MP4 listed as a compatible brand
+  assert.throws(() => decodeImage(dataUrlOf("video/mp4", Buffer.from(gif.split(",")[1]!, "base64"))), /do not match/);
+  assert.throws(() => decodeImage(dataUrlOf("video/quicktime", mp4Bytes)), /MP4\/WebM video up to 24 MB/);
+  // A video may exceed the GIF budget but not its own.
+  assert.equal(decodeImage(dataUrlOf("video/mp4", Buffer.concat([mp4Bytes, Buffer.alloc(12 * 1024 * 1024)]))).mime, "video/mp4");
+  assert.throws(() => decodeImage(dataUrlOf("video/mp4", Buffer.concat([mp4Bytes, Buffer.alloc(MAX_VIDEO_BYTES)]))), /up to 24 MB/);
+  assert.throws(() => decodeImage(dataUrlOf("image/gif", Buffer.concat([Buffer.from(gif.split(",")[1]!, "base64"), Buffer.alloc(MAX_GIF_BYTES)]))));
+});
+
+test("stored videos stream with byte ranges and are flagged for the video renderer", async () => {
+  const host = createFakePluginHost({ pluginId: "aura-motion" }); plugin(host.bb);
+  try {
+    const saved = await host.harness.callRpc("apply", { settings: defaults, image: { action: "replace", name: "loop.mp4", dataUrl: dataUrlOf("video/mp4", mp4Bytes) }, saveSlot: { slot: 1, name: "Loop" } }) as Snapshot;
+    assert.equal(saved.slots[0]?.image?.mime, "video/mp4");
+    const url = imageUrl(saved.image)!;
+    assert.ok(isVideo(url)); assert.ok(!isAnimatedImage(url));
+    const path = url.replace("/api/v1/plugins/aura-motion/http", "");
+    const full = await host.harness.fetchHttp("GET", path);
+    assert.equal(full.status, 200); assert.equal(full.headers.get("content-type"), "video/mp4");
+    assert.equal(full.headers.get("accept-ranges"), "bytes"); assert.equal(full.headers.get("content-length"), String(mp4Bytes.length));
+    const part = await host.harness.fetchHttp("GET", path, { headers: { range: "bytes=4-11" } });
+    assert.equal(part.status, 206);
+    assert.equal(part.headers.get("content-range"), `bytes 4-11/${mp4Bytes.length}`);
+    assert.equal(Buffer.from(await part.arrayBuffer()).toString("ascii"), "ftypisom");
+    const beyond = await host.harness.fetchHttp("GET", path, { headers: { range: `bytes=${mp4Bytes.length}-` } });
+    assert.equal(beyond.status, 416); assert.equal(beyond.headers.get("content-range"), `bytes */${mp4Bytes.length}`);
   } finally { await host.harness.dispose(); }
 });

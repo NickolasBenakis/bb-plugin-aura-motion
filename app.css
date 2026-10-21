@@ -61,7 +61,7 @@
 .aura-motion-slot[data-active] { border-color:var(--primary); box-shadow:0 0 0 1px var(--primary); }
 .aura-motion-slot-use { padding:10px; border:0; background:transparent; color:inherit; width:100%; text-align:left; display:flex; flex-direction:column; gap:6px; }
 .aura-motion-slot-art { width:100%; aspect-ratio:2; border-radius:5px; overflow:hidden; display:block; background:var(--muted); }
-.aura-motion-slot-art img { width:100%; height:100%; object-fit:cover; }
+.aura-motion-slot-art img, .aura-motion-slot-art video { display:block; width:100%; height:100%; object-fit:cover; }
 .aura-motion-slot-pixels { display:block; width:100%; height:100%; background:radial-gradient(#5e6ad2 1px,transparent 1px) 0 0/6px 6px; mask-image:linear-gradient(150deg,#000,transparent); }
 .aura-motion-slot-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; font-size:12px; }
 .aura-motion-slot-use small { color:var(--aura-motion-muted); font-size:10px; }
