@@ -120,7 +120,9 @@ export function readingSurface(surface: ChatSurface): string {
   const FOOTER = `${PANEL} [data-scroll-footer] > .bg-background > .mx-auto`;
   const TABLE = `${PANEL} [data-markdown-preview] div:has(> table)`;
   const HEADER = `${PANEL} header:has(> [data-testid="app-page-header-content-row"])`;
-  const PROMPT = `${PANEL} form[data-promptbox]`;
+  // The composer, and the question card BB shows in its place, which is only
+  // 6% opaque because it expects the host's opaque footer behind it.
+  const PROMPT = `${PANEL} :is(form[data-promptbox], [data-testid="user-question-banner"])`;
   const paint = surface === "solid"
     ? `${COLUMN}, ${FOOTER} { background-color:var(--background); }
 ${COLUMN} { box-shadow:0 0 0 1px var(--border); }
@@ -139,7 +141,7 @@ ${PANEL} .thread-scrollbar:has(> div > .mx-auto) {
 ${FOOTER} { position:relative; isolation:isolate; }
 ${FOOTER}::before {
   content:""; position:absolute; inset:-32px 0 0; z-index:-1; pointer-events:none;
-  background-color:color-mix(in oklab,var(--background) 72%,transparent);
+  background-color:color-mix(in oklab,var(--background) 95%,transparent);
   -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
   -webkit-mask-image:linear-gradient(to bottom,transparent,#000 32px);
   mask-image:linear-gradient(to bottom,transparent,#000 32px);
@@ -162,13 +164,13 @@ ${HEADER}::before {
    render in a portal outside the panel, so the filter cannot displace them. */
 ${PROMPT} {
   border-radius:18px; corner-shape:squircle;
-  background-color:color-mix(in oklab,var(--background) 90%,transparent);
+  background-color:color-mix(in oklab,var(--background) 95%,transparent);
   border-color:rgba(255,255,255,.6);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.7), 0 1px 2px rgba(0,0,0,.05), 0 10px 30px rgba(0,0,0,.12);
   -webkit-backdrop-filter:blur(24px) saturate(1.4); backdrop-filter:blur(24px) saturate(1.4);
 }
 .dark ${PROMPT} {
-  background-color:color-mix(in oklab,var(--background) 80%,transparent);
+  background-color:color-mix(in oklab,var(--background) 92%,transparent);
   border-color:rgba(255,255,255,.1);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 1px 2px rgba(0,0,0,.3), 0 12px 36px rgba(0,0,0,.4);
 }

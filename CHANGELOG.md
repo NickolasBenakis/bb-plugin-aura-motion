@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.2
+
+- Make the area behind the composer nearly opaque in Glass and Sheer (95%
+  tint) and raise the composer capsule to 95% in light and 92% in dark, so
+  text scrolling underneath no longer shows through.
+- Give BB's question card, which replaces the composer while an agent waits
+  for an answer, the same glass fill; on its own it is only 6% opaque.
+- Move the workflows to `actions/checkout@v5` and `actions/setup-node@v5`,
+  which run on Node 24.
+
 ## 0.3.1
 
 - Hide messages that scroll under the composer in Glass and Sheer: the area

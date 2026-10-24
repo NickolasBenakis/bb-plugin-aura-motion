@@ -21,7 +21,7 @@ jobs:
       version: ${{ steps.read.outputs.version }}
       tagged: ${{ steps.read.outputs.tagged }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - id: read
@@ -47,7 +47,7 @@ jobs:
       VERSION: ${{ needs.version.outputs.version }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Tag the release
