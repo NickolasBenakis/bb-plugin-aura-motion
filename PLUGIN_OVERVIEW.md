@@ -10,6 +10,10 @@ sit on a solid column or on frosted glass that lets the wallpaper show through.
   readable, the composer becomes a matching glass capsule, and the sheet keeps
   its margins from phone to 4K widths. Set it per slot, or with
   `bb aura-motion chat glass`.
+- **Readable on phones.** In the bb mobile app and phone browsers, the New
+  thread Recent list and project row sit on frosted cards, and Sheer chats use
+  Glass's fill, so text stays clear when the wallpaper fills the screen.
+  Desktop is unchanged.
 - **Video wallpapers.** Upload an MP4 (H.264) or WebM loop up to 24 MB and
   4,096 px per side, so a 4K loop plays in full colour. Videos play muted and
   looped. Turn the texture off to show the video exactly as encoded, or keep
