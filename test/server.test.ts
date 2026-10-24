@@ -239,3 +239,37 @@ test("stored videos stream with byte ranges and are flagged for the video render
     assert.equal(beyond.status, 416); assert.equal(beyond.headers.get("content-range"), `bytes */${mp4Bytes.length}`);
   } finally { await host.harness.dispose(); }
 });
+
+test("chat surface persists in saved slots, survives reload and defaults to solid for legacy data", async () => {
+  let host = createFakePluginHost({ pluginId: "aura-motion" });
+  try {
+    plugin(host.bb);
+    assert.equal((await host.harness.callRpc("get", null) as Snapshot).settings.chatSurface, "solid");
+    await host.harness.callRpc("apply", { settings: { ...defaults, chatSurface: "glass" }, image: replace, saveSlot: { slot: 1, name: "Glass" } });
+    await host.harness.callRpc("apply", { settings: { ...defaults, chatSurface: "sheer" }, image: keep, saveSlot: { slot: 2, name: "Sheer" } });
+    host = await host.harness.reload(plugin);
+    assert.equal((await host.harness.callRpc("activateSlot", { slot: 1 }) as Snapshot).settings.chatSurface, "glass");
+    assert.equal((await host.harness.callRpc("activateSlot", { slot: 2 }) as Snapshot).settings.chatSurface, "sheer");
+    const { chatSurface, ...legacy } = defaults;
+    assert.equal(chatSurface, "solid");
+    const restored = await host.harness.callRpc("apply", { settings: legacy, image: keep }) as Snapshot;
+    assert.equal(restored.settings.chatSurface, "solid");
+    await assert.rejects(host.harness.callRpc("apply", { settings: { ...defaults, chatSurface: "frosted" }, image: keep }));
+  } finally { await host.harness.dispose(); }
+});
+
+test("the chat CLI command switches the surface, keeps the image and rejects unknown values", async () => {
+  const host = createFakePluginHost({ pluginId: "aura-motion" }); plugin(host.bb);
+  try {
+    const before = await host.harness.callRpc("apply", { settings: defaults, image: replace }) as Snapshot;
+    for (const surface of ["glass", "sheer", "solid"] as const) {
+      const result = await host.harness.runCli(["chat", surface]);
+      assert.equal(result.exitCode, 0);
+      const snapshot = JSON.parse(result.stdout!) as Snapshot;
+      assert.equal(snapshot.settings.chatSurface, surface);
+      assert.equal(snapshot.image?.version, before.image?.version);
+    }
+    for (const argv of [["chat"], ["chat", "frosted"], ["chat", "glass", "extra"]]) assert.equal((await host.harness.runCli(argv)).exitCode, 1);
+    assert.match((await host.harness.runCli(["help"])).stdout!, /bb aura-motion chat solid\|glass\|sheer/);
+  } finally { await host.harness.dispose(); }
+});

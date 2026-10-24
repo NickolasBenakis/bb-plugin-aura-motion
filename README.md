@@ -58,8 +58,11 @@ In **Settings → Aura Motion Motion**, use **Half wallpaper on New thread**:
 
 - **On:** the wallpaper appears in the upper half and fades out at the midpoint.
 - **Off:** New thread shows the full wallpaper.
-- Chats always show the full wallpaper in their margins, with readable message
-  and table backgrounds. There is no dimmer button in the composer.
+- Chats always show the full wallpaper. **Behind your messages** picks how much
+  shows through the message column: **Solid** (margins only), **Glass** (a
+  floating frosted sheet) or **Sheer** (a light veil). Glass follows Apple's
+  materials and turns solid when Reduce Transparency is on. The live preview's
+  **Chat** tab shows the chosen surface. There is no dimmer button in the composer.
 
 Select **Apply background** to save the setting.
 
@@ -101,7 +104,7 @@ Requires BB 0.40+ and SDK 0.4.21+. Uninstall Aura first if you use it
 (`bb plugin remove aura`; this deletes Aura's saved slots).
 
 ```sh
-bb plugin install git:https://github.com/NickolasBenakis/bb-plugin-aura-motion.git@^0.2.0
+bb plugin install git:https://github.com/NickolasBenakis/bb-plugin-aura-motion.git@^0.3.0
 ```
 
 From a checkout:
@@ -123,6 +126,7 @@ bb aura-motion new-thread-only on
 bb aura-motion new-thread-only off
 bb aura-motion overview on
 bb aura-motion overview off
+bb aura-motion chat glass
 bb aura-motion enable
 bb aura-motion disable
 bb aura-motion reset
@@ -159,6 +163,13 @@ without it, the shader shows the first frame. The image/gradient remains if WebG
 
 ```sh
 npm run check
+```
+
+To check the chat glass across eight device sizes in light and dark (read-only;
+set Behind your messages to Glass or Sheer first):
+
+```sh
+BB_THREAD_ID=thr_… BB_SCREENSHOT_DIR=/tmp/aura-shots npm run test:responsive
 ```
 
 Unit tests cover atomic apply/rejection, six-slot persistence and replacement,

@@ -16,6 +16,8 @@ export const SLOT_COUNT = 6;
 export const PATTERNS = ["noise", "warp", "dots", "wave", "ripple", "swirl", "sphere"] as const;
 export const DITHERS = ["random", "2x2", "4x4", "8x8"] as const;
 export const PHOTO_MOTIONS = ["wave", "ripple", "drift", "shimmer", "still"] as const;
+// How much of the wallpaper shows through the chat reading column.
+export const CHAT_SURFACES = ["solid", "glass", "sheer"] as const;
 export const settingsSchema = z.object({
   enabled: z.boolean(),
   newThreadOnly: z.boolean().default(false),
@@ -32,11 +34,13 @@ export const settingsSchema = z.object({
   imageOpacity: z.number().min(0).max(1),
   fit: z.enum(["cover", "contain"]),
   fade: z.number().min(0).max(1),
+  chatSurface: z.enum(CHAT_SURFACES).default("solid"),
 }).strict();
 export type BackgroundSettings = z.infer<typeof settingsSchema>;
+export type ChatSurface = BackgroundSettings["chatSurface"];
 export const defaults: BackgroundSettings = {
   enabled: true, newThreadOnly: false, dimmerEnabled: true, activityOverview: false, effect: "pixels", pattern: "noise", dither: "8x8", photoMotion: "wave", fps: 15, quality: "balanced", tint: "lavender", intensity: 0.5,
-  imageOpacity: 0.7, fit: "cover", fade: 0.35,
+  imageOpacity: 0.7, fit: "cover", fade: 0.35, chatSurface: "solid",
 };
 export const imageInfoSchema = z.object({
   version: z.string().regex(/^[a-f0-9]{24}$/), name: z.string().max(160),

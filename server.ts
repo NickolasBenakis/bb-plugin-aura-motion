@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { defineRpcContract, type BbPluginApi } from "@get-bb/plugin-sdk";
 import { z } from "zod";
-import { CHANGED, defaults, settingsSchema, snapshotSchema, applySchema, slotNumberSchema, type Snapshot, type ApplyInput } from "./lib/model.ts";
+import { CHANGED, CHAT_SURFACES, defaults, settingsSchema, snapshotSchema, applySchema, slotNumberSchema, type Snapshot, type ApplyInput } from "./lib/model.ts";
 import { decodeImage } from "./lib/image.ts";
 import { parseRange } from "./lib/range.ts";
 import { activityInputSchema, activityResultSchema } from "./lib/activity.ts";
@@ -104,10 +104,10 @@ export default function aura(bb: BbPluginApi): void {
       ...headers, "Content-Range": `bytes ${range.start}-${range.end}/${bytes.length}`, "Content-Length": String(range.end - range.start + 1),
     } });
   });
-  const usage = "bb aura-motion status [--json]\nbb aura-motion enable|disable|reset\nbb aura-motion slots\nbb aura-motion use <1-6>\nbb aura-motion new-thread-only on|off\nbb aura-motion overview on|off\nOpen Settings → Aura Motion to upload images or videos, save slots and toggle Activity overview.";
+  const usage = "bb aura-motion status [--json]\nbb aura-motion enable|disable|reset\nbb aura-motion slots\nbb aura-motion use <1-6>\nbb aura-motion new-thread-only on|off\nbb aura-motion overview on|off\nbb aura-motion chat solid|glass|sheer\nOpen Settings → Aura Motion to upload images or videos, save slots and toggle Activity overview.";
   bb.cli.register({
     name: "aura-motion", summary: "Manage Aura Motion backgrounds and saved slots",
-    commands: ["status", "enable", "disable", "reset", "slots", "use", "new-thread-only", "overview"].map(name => ({ name, summary: `Aura Motion ${name}`, usage: `bb aura-motion ${name}` })),
+    commands: ["status", "enable", "disable", "reset", "slots", "use", "new-thread-only", "overview", "chat"].map(name => ({ name, summary: `Aura Motion ${name}`, usage: `bb aura-motion ${name}` })),
     async run(argv) {
       const [command, ...args] = argv.filter(arg => arg !== "--json");
       if (!command || command === "help" || command === "--help") return { exitCode: 0, stdout: usage };
@@ -120,6 +120,7 @@ export default function aura(bb: BbPluginApi): void {
         } else if (command === "use" && args.length === 1 && /^[1-6]$/.test(args[0]!)) result = activate(Number(args[0]));
         else if (command === "new-thread-only" && args.length === 1 && ["on", "off"].includes(args[0]!)) result = apply({ settings: { ...read().settings, newThreadOnly: args[0] === "on" }, image: { action: "keep" } });
         else if (command === "overview" && args.length === 1 && ["on", "off"].includes(args[0]!)) result = apply({ settings: { ...read().settings, activityOverview: args[0] === "on" }, image: { action: "keep" } });
+        else if (command === "chat" && args.length === 1 && (CHAT_SURFACES as readonly string[]).includes(args[0]!)) result = apply({ settings: { ...read().settings, chatSurface: args[0] as Snapshot["settings"]["chatSurface"] }, image: { action: "keep" } });
         else return { exitCode: 1, stderr: usage };
         return { exitCode: 0, stdout: JSON.stringify(result, null, 2) };
       } catch (error) { return { exitCode: 1, stderr: error instanceof Error ? error.message : String(error) }; }

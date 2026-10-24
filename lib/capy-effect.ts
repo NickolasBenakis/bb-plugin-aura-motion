@@ -23,7 +23,59 @@ export const CAPY_CSS = `
   mask-image:linear-gradient(to bottom, #000 0%, #000 25%, transparent 50%, transparent 100%);
 }
 
+/* Chat glass: one still, floating sheet behind the message column, modeled on
+   Apple's materials (heavy blur with vibrancy, a lit rim, grain against banding). */
+.aura-motion-capy-sheet {
+  display:none; position:absolute; top:10px; bottom:10px; pointer-events:none;
+  left:calc(50% - min(380px, 50% - 16px)); width:min(760px, calc(100% - 32px));
+  border-radius:26px; corner-shape:squircle;
+  --aura-motion-sheet-fill:color-mix(in oklab,var(--background) 66%,transparent);
+  --aura-motion-sheet-filter:blur(40px) saturate(1.5) brightness(1.08);
+  background-color:var(--aura-motion-sheet-fill);
+  background-image:linear-gradient(162deg,rgba(255,255,255,.12),rgba(255,255,255,0) 32%);
+  -webkit-backdrop-filter:var(--aura-motion-sheet-filter); backdrop-filter:var(--aura-motion-sheet-filter);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6), inset 0 0 0 1px rgba(255,255,255,.28),
+    0 1px 2px rgba(0,0,0,.06), 0 24px 64px rgba(0,0,0,.16);
+}
+.aura-motion-capy-sheet[data-surface] { display:block; }
+@media (max-width: 640px) { .aura-motion-capy-sheet { border-radius:20px; } }
+.aura-motion-capy-sheet::after {
+  content:""; position:absolute; inset:0; border-radius:inherit; corner-shape:squircle;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity:.05; mix-blend-mode:overlay;
+}
+/* Dark glass dims what it covers, so bright video frames cannot wash out text. */
+.dark .aura-motion-capy-sheet {
+  --aura-motion-sheet-fill:color-mix(in oklab,var(--background) 60%,transparent);
+  --aura-motion-sheet-filter:blur(40px) saturate(1.4) brightness(.78);
+  background-image:linear-gradient(162deg,rgba(255,255,255,.07),rgba(255,255,255,0) 30%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14), inset 0 0 0 1px rgba(255,255,255,.06),
+    0 1px 2px rgba(0,0,0,.3), 0 30px 80px rgba(0,0,0,.5);
+}
+.aura-motion-capy-sheet[data-surface="sheer"] {
+  --aura-motion-sheet-fill:color-mix(in oklab,var(--background) 34%,transparent);
+  --aura-motion-sheet-filter:blur(12px) saturate(1.2) brightness(1.1);
+}
+.dark .aura-motion-capy-sheet[data-surface="sheer"] { --aura-motion-sheet-filter:blur(12px) saturate(1.2) brightness(.7); }
+@media (prefers-reduced-transparency: reduce) {
+  .aura-motion-capy-sheet, .dark .aura-motion-capy-sheet, .aura-motion-capy-sheet[data-surface="sheer"], .dark .aura-motion-capy-sheet[data-surface="sheer"] {
+    --aura-motion-sheet-fill:var(--background); --aura-motion-sheet-filter:none;
+  }
+}
 `;
+
+// The host's scrolling message column, which the chat glass sheet follows.
+export const CHAT_COLUMN = ".thread-scrollbar > div > .mx-auto";
+// Gap kept between the sheet and the panel edges and header, at every width.
+export const SHEET_INSET = 10;
+type Box = { left: number; right: number; top: number; width?: number };
+/** Sheet position inside the panel layer: the column's span, kept SHEET_INSET
+ *  clear of the panel sides on narrow windows where the column fills the panel. */
+export function sheetBox(panel: Box, column: Box, scroller: Box | null): { left: number; width: number; top: number | null } {
+  const left = Math.max(column.left, panel.left + SHEET_INSET);
+  const right = Math.min(column.right, panel.right - SHEET_INSET);
+  return { left: left - panel.left, width: Math.max(0, right - left), top: scroller ? scroller.top - panel.top + SHEET_INSET : null };
+}
 
 export interface CapyEffect { update(settings: BackgroundSettings, image: string | null): void; dispose(): void; }
 
@@ -67,7 +119,27 @@ export function mountCapyEffect(parent: HTMLElement, initial: BackgroundSettings
   const ink = document.createElement("div"); ink.className = "aura-motion-capy-ink";
   const focus = document.createElement("div"); focus.className = "aura-motion-capy-focus";
   const fade = document.createElement("div"); fade.className = "aura-motion-capy-fade";
-  layer.append(air, ink, focus, fade); parent.prepend(layer);
+  const sheet = document.createElement("div"); sheet.className = "aura-motion-capy-sheet";
+  layer.append(air, ink, focus, fade, sheet); parent.prepend(layer);
+  // The sheet stays still while messages scroll, so it tracks the column's
+  // horizontal position and width, and starts below the thread header.
+  // BB can swap the column on navigation.
+  let column: HTMLElement | null = null;
+  const resize = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => placeSheet());
+  resize?.observe(parent);
+  const recheck = setInterval(() => { if (sheet.dataset.surface && !column?.isConnected) placeSheet(); }, 1000);
+  function placeSheet(): void {
+    if (!sheet.dataset.surface) return;
+    if (!column?.isConnected) {
+      if (column) resize?.unobserve(column);
+      column = parent.querySelector<HTMLElement>(CHAT_COLUMN);
+      if (column) resize?.observe(column);
+    }
+    if (!column) { sheet.style.left = ""; sheet.style.width = ""; sheet.style.top = ""; return; }
+    const box = sheetBox(layer.getBoundingClientRect(), column.getBoundingClientRect(), column.closest(".thread-scrollbar")?.getBoundingClientRect() ?? null);
+    sheet.style.left = `${box.left}px`; sheet.style.width = `${box.width}px`;
+    if (box.top !== null) sheet.style.top = `${box.top}px`;
+  }
   let settings = initial;
   let currentImage: string | null | undefined;
   let disposeShader = () => {};
@@ -88,6 +160,8 @@ export function mountCapyEffect(parent: HTMLElement, initial: BackgroundSettings
     // The settings toggle affects New thread only: show the top half of the
     // wallpaper with a fade to the theme background at the midpoint.
     const conversation = parent.id === "thread-detail-timeline-panel";
+    if (conversation && settings.chatSurface !== "solid") { sheet.dataset.surface = settings.chatSurface; placeSheet(); }
+    else delete sheet.dataset.surface;
     fade.style.opacity = "0";
     focus.style.opacity = "0";
     if (settings.dimmerEnabled && !conversation) ink.dataset.halfWallpaper = "";
@@ -110,7 +184,7 @@ export function mountCapyEffect(parent: HTMLElement, initial: BackgroundSettings
     }
   }
   update(initial, imageUrl);
-  return { update, dispose() { if (stopped) return; stopped = true; theme.disconnect(); disposeShader(); video?.dispose(); video = null; layer.remove(); } };
+  return { update, dispose() { if (stopped) return; stopped = true; theme.disconnect(); resize?.disconnect(); clearInterval(recheck); disposeShader(); video?.dispose(); video = null; layer.remove(); } };
 }
 
 function mountShader(parent: HTMLElement, imageUrl: string | null, color: string, settings: BackgroundSettings, video: HTMLVideoElement | null): () => void {

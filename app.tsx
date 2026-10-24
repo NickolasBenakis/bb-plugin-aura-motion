@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { definePluginApp, useRealtime, useRpc } from "@get-bb/plugin-sdk/app";
 import type { rpcContract } from "./server.ts";
 import { CHANGED, defaults, imageUrl, isAnimatedImage, isVideo, SLOT_COUNT, type BackgroundSettings, type Snapshot } from "./lib/model.ts";
@@ -15,6 +15,12 @@ const MOTION_LABELS: Record<BackgroundSettings["photoMotion"], string> = {
   wave: "Wave", ripple: "Ripple", drift: "Diagonal drift", shimmer: "Shimmer", still: "Still",
 };
 const DITHER_OPTIONS = [["random", "Grain"], ["2x2", "2×2"], ["4x4", "4×4"], ["8x8", "8×8"]] as const;
+const CHAT_SURFACE_OPTIONS = [["solid", "Solid"], ["glass", "Glass"], ["sheer", "Sheer"]] as const;
+const CHAT_SURFACE_HELP: Record<BackgroundSettings["chatSurface"], string> = {
+  solid: "Wallpaper shows in the margins only; messages sit on your theme color.",
+  glass: "Wallpaper shows through a frosted message column.",
+  sheer: "Wallpaper shows clearly behind messages under a light veil. Best with calm images.",
+};
 
 function message(cause: unknown): string { return cause instanceof Error ? cause.message : String(cause); }
 
@@ -36,6 +42,7 @@ export function BackgroundEditor() {
   const mounted = useRef(true);
   const picking = useRef(0);
   const fileInput = useRef<HTMLInputElement>(null);
+  const [previewMode, setPreviewMode] = useState<"chat" | "new-thread">("chat");
   const id = useId();
   const refresh = useCallback(() => {
     const request = ++requests.current;
@@ -126,28 +133,44 @@ export function BackgroundEditor() {
       <style>{backgroundRules(".aura-motion-preview-scene") + CAPY_CSS}</style>
       <div className="aura-motion-intro">
         <div><p className="aura-motion-eyebrow">MAKE ROOM FOR YOURSELF</p><h2>Your conversations, your backdrop.</h2><p>A little texture. A favorite image. A quieter place to think.</p></div>
-        <label className="aura-motion-switch"><input type="checkbox" checked={draft.enabled} disabled={busy || !snapshot} onChange={e => change("enabled", e.target.checked)} /><span>Enabled</span></label>
+        <label className="aura-motion-switch"><input type="checkbox" className="aura-motion-toggle" checked={draft.enabled} disabled={busy || !snapshot} onChange={e => change("enabled", e.target.checked)} /><span>Enabled</span></label>
       </div>
       {error && <p className="aura-motion-error" role="alert">{error}</p>}
-      <label className="aura-motion-scope aura-motion-overview-setting"><input type="checkbox" aria-label="Activity overview" checked={snapshot?.settings.activityOverview ?? false} disabled={busy || !snapshot} onChange={e => void toggleOverview(e.target.checked)} /><span><strong>Activity overview</strong><small>Show your GitHub activity below the centered New thread composer. Saves immediately; your background draft stays intact.</small></span></label>
+      <label className="aura-motion-scope aura-motion-overview-setting aura-motion-group"><input type="checkbox" className="aura-motion-toggle" aria-label="Activity overview" checked={snapshot?.settings.activityOverview ?? false} disabled={busy || !snapshot} onChange={e => void toggleOverview(e.target.checked)} /><span><strong>Activity overview</strong><small>Show your GitHub activity below the centered New thread composer. Saves immediately; your background draft stays intact.</small></span></label>
       <div className="aura-motion-layout">
         <div className="aura-motion-preview-wrap">
-          <div className="aura-motion-preview-scene">
-            <CapyPreview settings={draft} image={currentImage} />
-            <div className="aura-motion-preview-label"><span className="aura-motion-live-dot"/>LIVE PREVIEW</div>
-            <div className="aura-motion-preview-conversation">
-              <span className="aura-motion-preview-greeting">Space for your next idea.</span>
-              <p>Your messages stay clear, with a soft background behind them.</p>
-              <div className="aura-motion-preview-composer"><span>What would you like to make?</span><div><span>＋</span><span className="aura-motion-preview-send">↑</span></div></div>
+          <div className="aura-motion-preview-scene" data-mode={previewMode}>
+            <CapyPreview settings={previewMode === "chat" ? { ...draft, dimmerEnabled: false } : draft} image={currentImage} />
+            <div className="aura-motion-preview-bar">
+              <div className="aura-motion-preview-label"><span className="aura-motion-live-dot"/>LIVE PREVIEW</div>
+              <div className="aura-motion-preview-tabs" role="group" aria-label="Preview">
+                {([["chat", "Chat"], ["new-thread", "New thread"]] as const).map(([mode, text]) => <button key={mode} type="button" aria-pressed={previewMode === mode} onClick={() => setPreviewMode(mode)}>{text}</button>)}
+              </div>
             </div>
-            <span className="aura-motion-preview-footnote">AURA</span>
+            {previewMode === "chat"
+              ? <div className="aura-motion-preview-chat" data-surface={draft.newThreadOnly ? "solid" : draft.chatSurface}>
+                  <div className="aura-motion-preview-bubble">Can my wallpaper play behind the chat?</div>
+                  <p className="aura-motion-preview-reply">It can. Your image or video now sits behind every conversation, and your messages stay easy to read.</p>
+                  <div className="aura-motion-preview-composer"><span>Ask for a follow-up</span><div><span>＋</span><span className="aura-motion-preview-send">↑</span></div></div>
+                </div>
+              : <div className="aura-motion-preview-conversation">
+                  <span className="aura-motion-preview-greeting">Space for your next idea.</span>
+                  <p>Your messages stay clear, with a soft background behind them.</p>
+                  <div className="aura-motion-preview-composer"><span>What would you like to make?</span><div><span>＋</span><span className="aura-motion-preview-send">↑</span></div></div>
+                </div>}
           </div>
           <p className="aura-motion-caption">{draft.newThreadOnly ? "Only on the New thread screen — existing conversations stay plain." : "Shown in all conversations and on New thread."} Images stay on your BB server.</p>
         </div>
         <fieldset className="aura-motion-controls" disabled={busy || !snapshot}>
           <legend className="aura-motion-sr-only">Background controls</legend>
-          <label className="aura-motion-scope"><input type="checkbox" aria-label="New thread screen only" aria-describedby={`${id}-scope-help`} checked={draft.newThreadOnly} onChange={e => change("newThreadOnly", e.target.checked)} /><span><strong>New thread screen only</strong><small id={`${id}-scope-help`}>Hide Aura Motion inside existing conversations.</small></span></label>
-          <label className="aura-motion-scope"><input type="checkbox" aria-label="Half wallpaper on New thread" checked={draft.dimmerEnabled} onChange={e => change("dimmerEnabled", e.target.checked)} /><span><strong>Half wallpaper on New thread</strong><small>On: wallpaper fades out halfway down. Off: full wallpaper. Chats always use full wallpaper.</small></span></label>
+          <section className="aura-motion-group" aria-labelledby={`${id}-where`}>
+          <h3 className="aura-motion-group-title" id={`${id}-where`}>Where it shows</h3>
+          <label className="aura-motion-scope"><input type="checkbox" className="aura-motion-toggle" aria-label="New thread screen only" aria-describedby={`${id}-scope-help`} checked={draft.newThreadOnly} onChange={e => change("newThreadOnly", e.target.checked)} /><span><strong>New thread screen only</strong><small id={`${id}-scope-help`}>Hide Aura Motion inside existing conversations.</small></span></label>
+          <label className="aura-motion-scope"><input type="checkbox" className="aura-motion-toggle" aria-label="Half wallpaper on New thread" checked={draft.dimmerEnabled} onChange={e => change("dimmerEnabled", e.target.checked)} /><span><strong>Half wallpaper on New thread</strong><small>On: wallpaper fades out halfway down. Off: full wallpaper. Chats always use full wallpaper.</small></span></label>
+          {!draft.newThreadOnly && <SegmentedControl id={`${id}-chat`} label="Behind your messages" help={CHAT_SURFACE_HELP[draft.chatSurface]} value={draft.chatSurface} options={CHAT_SURFACE_OPTIONS} onChange={value => change("chatSurface", value as BackgroundSettings["chatSurface"])} />}
+          </section>
+          <section className="aura-motion-group" aria-labelledby={`${id}-media`}>
+          <h3 className="aura-motion-group-title" id={`${id}-media`}>Media</h3>
           <div className="aura-motion-field">
             <span className="aura-motion-field-title">Your image or video <span>optional</span></span>
             <button type="button" className="aura-motion-upload" onClick={() => fileInput.current?.click()} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); void choose(e.dataTransfer.files[0]); }}>
@@ -158,6 +181,10 @@ export function BackgroundEditor() {
             <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/gif,video/mp4,video/webm" aria-label="Upload background image" className="aura-motion-sr-only" onChange={e => { void choose(e.target.files?.[0]); e.target.value = ""; }} />
             {imageName && <div className="aura-motion-file"><span title={imageName}>{imageName}</span><button type="button" onClick={() => { setUpload(null); setRemove(true); dirty.current = true; setStatus("Unsaved changes"); }}>Remove</button></div>}
           </div>
+          {currentImage && <><Slider id={`${id}-opacity`} label="Image visibility" value={draft.imageOpacity} max={1} onChange={v => change("imageOpacity", v)} /><div className="aura-motion-field"><label className="aura-motion-field-title" htmlFor={`${id}-fit`}>Image fit</label><select id={`${id}-fit`} value={draft.fit} onChange={e => change("fit", e.target.value as BackgroundSettings["fit"])}><option value="cover">Fill the conversation</option><option value="contain">Show the whole image</option></select></div></>}
+          </section>
+          <section className="aura-motion-group" aria-labelledby={`${id}-look`}>
+          <h3 className="aura-motion-group-title" id={`${id}-look`}>Look</h3>
           <div className="aura-motion-field"><label className="aura-motion-field-title" htmlFor={`${id}-effect`}>Texture</label><select id={`${id}-effect`} value={draft.effect} onChange={e => change("effect", e.target.value as BackgroundSettings["effect"])}><option value="pixels">Capy dithering</option><option value="none">No texture</option></select></div>
           {draft.effect === "pixels" && <>
             <SegmentedControl id={`${id}-fps`} label="Animation speed" help="Higher FPS uses more GPU." value={String(draft.fps)} options={[["15", "15 FPS"], ["30", "30 FPS"], ["60", "60 FPS"]]} onChange={value => change("fps", Number(value) as BackgroundSettings["fps"])} />
@@ -169,7 +196,7 @@ export function BackgroundEditor() {
           </>}
           {draft.effect === "pixels" && !currentImage && <><div className="aura-motion-field"><label className="aura-motion-field-title" htmlFor={`${id}-tint`}>Pixel color</label><select id={`${id}-tint`} value={draft.tint} onChange={e => change("tint", e.target.value as BackgroundSettings["tint"])}><option value="lavender">Lavender</option><option value="theme">Follow BB theme</option></select></div>
           <Slider id={`${id}-strength`} label="Texture strength" value={draft.intensity} onChange={v => change("intensity", v)} /></>}
-          {currentImage && <><Slider id={`${id}-opacity`} label="Image visibility" value={draft.imageOpacity} max={1} onChange={v => change("imageOpacity", v)} /><div className="aura-motion-field"><label className="aura-motion-field-title" htmlFor={`${id}-fit`}>Image fit</label><select id={`${id}-fit`} value={draft.fit} onChange={e => change("fit", e.target.value as BackgroundSettings["fit"])}><option value="cover">Fill the conversation</option><option value="contain">Show the whole image</option></select></div></>}
+          </section>
         </fieldset>
       </div>
       <section className="aura-motion-library" aria-label="Saved backgrounds">
@@ -212,7 +239,7 @@ function CapyPreview({ settings, image }: { settings: BackgroundSettings; image:
   return <span ref={anchor} hidden />;
 }
 function Slider({ id, label, value, max = 1, onChange }: { id: string; label: string; value: number; max?: number; onChange: (value: number) => void }) {
-  return <div className="aura-motion-field"><label className="aura-motion-field-title" htmlFor={id}>{label}<output htmlFor={id}>{Math.round(value * 100)}%</output></label><input id={id} type="range" min="0" max={max} step="0.01" value={value} onChange={e => onChange(Number(e.target.value))} /></div>;
+  return <div className="aura-motion-field"><label className="aura-motion-field-title" htmlFor={id}>{label}<output htmlFor={id}>{Math.round(value * 100)}%</output></label><input id={id} type="range" min="0" max={max} step="0.01" value={value} style={{ "--aura-motion-fill": `${(value / max) * 100}%` } as CSSProperties} onChange={e => onChange(Number(e.target.value))} /></div>;
 }
 function SegmentedControl({ id, label, help, value, options, onChange }: { id: string; label: string; help: string; value: string; options: readonly (readonly [string, string])[]; onChange: (value: string) => void }) {
   const helpId = `${id}-help`;

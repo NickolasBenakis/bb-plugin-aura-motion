@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.3.0
+
+- Add **Behind your messages** (Solid, Glass, Sheer): show the wallpaper, photo,
+  GIF or video behind the chat itself, not only in the margins. Solid (the
+  default) is unchanged, and the choice is saved with each slot.
+- Glass and Sheer draw one floating sheet behind the message column, modeled on
+  Apple's materials: heavy blur with vibrancy, a lit rim and hairline, grain,
+  and continuous (squircle) corners where the browser supports `corner-shape`.
+  In dark mode the glass dims what it covers, so bright video frames cannot wash
+  out text.
+- The sheet tracks the column through resizes and thread switches, keeps a 10 px
+  inset from the panel and header at every width, and widens text padding on
+  narrow panels and phones.
+- The thread header floats over the wallpaper without a bar; messages fade at the
+  top edge and blur progressively under the composer, which becomes a glass
+  capsule. Reduce Transparency turns every glass surface solid.
+- Redesign the settings page: grouped cards, switches, a segmented control with
+  a raised thumb, styled sliders and selects, slot cards, a glass action bar, and
+  a live preview that toggles between Chat (showing the chosen surface) and New
+  thread.
+- Add `bb aura-motion chat solid|glass|sheer`.
+- Tests: sheet geometry at 13 device widths, chat-surface persistence and CLI,
+  settings editor behavior, and an opt-in browser check (`npm run test:responsive`)
+  across eight device sizes in light and dark.
+
 ## 0.2.0
 
 - Accept MP4 (H.264) and WebM video wallpapers up to 24 MB and 4,096 px per

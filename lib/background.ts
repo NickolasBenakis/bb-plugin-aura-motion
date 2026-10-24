@@ -1,4 +1,4 @@
-import { imageUrl, snapshotSchema, type Snapshot } from "./model.ts";
+import { imageUrl, snapshotSchema, type ChatSurface, type Snapshot } from "./model.ts";
 import { CAPY_CSS, mountCapyEffect, type CapyEffect } from "./capy-effect.ts";
 
 export const LOCAL_CHANGE = "bb:aura-motion:changed";
@@ -111,31 +111,86 @@ export const COMPOSE_LAYOUT = `${COMPOSE_CENTER}
   }
 }
 `;
-export const READING_SURFACE = `
-[id="thread-detail-timeline-panel"] .thread-scrollbar:has(> div > .mx-auto) {
-  background-color:transparent;
+// Paint for the chat reading column. Solid hides the wallpaper behind text.
+// Glass and Sheer leave the column clear: the capy layer draws a floating
+// sheet behind it, and the composer gets Apple's scroll-edge blur.
+export function readingSurface(surface: ChatSurface): string {
+  const PANEL = '[id="thread-detail-timeline-panel"]';
+  const COLUMN = `${PANEL} .thread-scrollbar > div > .mx-auto`;
+  const FOOTER = `${PANEL} [data-scroll-footer] > .bg-background > .mx-auto`;
+  const TABLE = `${PANEL} [data-markdown-preview] div:has(> table)`;
+  const HEADER = `${PANEL} header:has(> [data-testid="app-page-header-content-row"])`;
+  const PROMPT = `${PANEL} form[data-promptbox]`;
+  const paint = surface === "solid"
+    ? `${COLUMN}, ${FOOTER} { background-color:var(--background); }
+${COLUMN} { box-shadow:0 0 0 1px var(--border); }
+${PANEL} [data-markdown-preview] table,
+${TABLE} { background-color:var(--background); }`
+    : `${COLUMN}, ${FOOTER} { background-color:transparent; }
+/* Messages fade out at the top edge of the sheet. The mask also makes the
+   scroller the backdrop root, so the composer blur below sees only messages. */
+${PANEL} .thread-scrollbar:has(> div > .mx-auto) {
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 28px);
+  mask-image:linear-gradient(to bottom,transparent 0,#000 28px);
 }
-[id="thread-detail-timeline-panel"] .thread-scrollbar > div > .mx-auto {
-  background-color:var(--background); box-shadow:0 0 0 1px var(--border);
+/* Messages blur progressively as they pass under the composer. A pseudo-element
+   carries the filter so fixed-position menus inside the composer stay anchored. */
+${FOOTER} { position:relative; isolation:isolate; }
+${FOOTER}::before {
+  content:""; position:absolute; inset:-32px 0 0; z-index:-1; pointer-events:none;
+  -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+  -webkit-mask-image:linear-gradient(to bottom,transparent,#000 32px);
+  mask-image:linear-gradient(to bottom,transparent,#000 32px);
+}
+${PANEL} [data-scroll-footer] > .bg-background:has(> .mx-auto) > [data-overflow-fade] { display:none; }
+/* Once the column fills the panel, the sheet sits SHEET_INSET inside it, so
+   widen the text padding to keep the same breathing room from the glass edge. */
+@container page (max-width: 780px) {
+  ${COLUMN}, ${FOOTER} { padding-inline:26px; }
+}
+${TABLE} { background-color:color-mix(in oklab,var(--background) 40%,transparent); }
+/* The thread header floats over the wallpaper like a macOS toolbar: no bar or
+   seam, just a soft scrim that keeps the title legible. */
+${HEADER} { background:transparent; border-color:transparent; isolation:isolate; }
+${HEADER}::before {
+  content:""; position:absolute; inset:0 0 -20px; z-index:-1; pointer-events:none;
+  background:linear-gradient(to bottom,color-mix(in oklab,var(--background) 58%,transparent),transparent);
+}
+/* The composer becomes a glass capsule with the sheet's lit rim. Its menus
+   render in a portal outside the panel, so the filter cannot displace them. */
+${PROMPT} {
+  border-radius:18px; corner-shape:squircle;
+  background-color:color-mix(in oklab,var(--background) 70%,transparent);
+  border-color:rgba(255,255,255,.6);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7), 0 1px 2px rgba(0,0,0,.05), 0 10px 30px rgba(0,0,0,.12);
+  -webkit-backdrop-filter:blur(24px) saturate(1.4); backdrop-filter:blur(24px) saturate(1.4);
+}
+.dark ${PROMPT} {
+  background-color:color-mix(in oklab,var(--background) 55%,transparent);
+  border-color:rgba(255,255,255,.1);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 1px 2px rgba(0,0,0,.3), 0 12px 36px rgba(0,0,0,.4);
+}
+@media (prefers-reduced-transparency: reduce) {
+  ${PROMPT}, .dark ${PROMPT} { background-color:var(--background); -webkit-backdrop-filter:none; backdrop-filter:none; }
+}`;
+  return `
+${PANEL} .thread-scrollbar:has(> div > .mx-auto) {
+  background-color:transparent;
 }
 /* Continue the wallpaper beside the sticky composer instead of covering
    the bottom of the whole pane with the host's full-width footer paint. */
-[id="thread-detail-timeline-panel"] [data-scroll-footer] > .bg-background:has(> .mx-auto) {
+${PANEL} [data-scroll-footer] > .bg-background:has(> .mx-auto) {
   background-color:transparent;
 }
-[id="thread-detail-timeline-panel"] [data-scroll-footer] > .bg-background > .mx-auto {
-  background-color:var(--background);
-}
-[id="thread-detail-timeline-panel"] [data-scroll-footer] > .bg-background:has(> .mx-auto) > [data-overflow-fade] {
+${PANEL} [data-scroll-footer] > .bg-background:has(> .mx-auto) > [data-overflow-fade] {
   left:50%; right:auto; width:min(760px,100%); transform:translateX(-50%);
 }
 /* BB intentionally lets wide Markdown tables extend beyond the text column.
    Paint the whole scrollable table surface, including its overflow area. */
-[id="thread-detail-timeline-panel"] [data-markdown-preview] table,
-[id="thread-detail-timeline-panel"] [data-markdown-preview] div:has(> table) {
-  background-color:var(--background);
-}
+${paint}
 `;
+}
+export const READING_SURFACE = readingSurface("solid");
 
 export function notifyChange(snapshot: Snapshot): void {
   window.dispatchEvent(new CustomEvent(LOCAL_CHANGE, { detail: snapshot }));
@@ -178,7 +233,7 @@ export function mountBackground(signal: AbortSignal): () => void {
   function apply(snapshot: Snapshot): void {
     current = snapshot;
     const target = targetsFor(snapshot);
-    const css = snapshot.settings.enabled ? `${backgroundRules(target)}\n${CAPY_CSS}\n${COMPOSE_LAYOUT}\n${snapshot.settings.newThreadOnly ? "" : READING_SURFACE}` : COMPOSE_CENTER;
+    const css = snapshot.settings.enabled ? `${backgroundRules(target)}\n${CAPY_CSS}\n${COMPOSE_LAYOUT}\n${snapshot.settings.newThreadOnly ? "" : readingSurface(snapshot.settings.chatSurface)}` : COMPOSE_CENTER;
     if (css !== lastCss) { style.textContent = css; lastCss = css; }
     reconcile();
   }

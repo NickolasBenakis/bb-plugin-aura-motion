@@ -1,6 +1,6 @@
 {
   "name": "bb-plugin-aura-motion",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Video, animated GIF and photo wallpapers with selectable dither textures for BB. Based on Aura by Mateo Cerquetella.",
   "license": "MIT",
   "type": "module",
@@ -11,7 +11,7 @@
   },
   "bb": {
     "name": "Aura Motion",
-    "description": "Video, animated GIF and photo wallpapers, seven dither patterns, six saved slots, and an optional activity overview.",
+    "description": "Video, animated GIF and photo wallpapers behind your chats with Apple-style glass, seven dither patterns, six saved slots, and an optional activity overview.",
     "branding": {
       "icon": "./assets/icon.svg"
     },
@@ -36,7 +36,8 @@
     "build": "env -u BB_CLI bb plugin build .",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test test/*.test.ts",
-    "check": "npm run typecheck && npm test && npm run build"
+    "check": "npm run typecheck && npm test && npm run build",
+    "test:responsive": "node test/responsive.browser.mjs"
   },
   "dependencies": {
     "zod": "^4.3.6"
