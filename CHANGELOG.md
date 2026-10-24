@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.3
+
+- Make the area behind the composer solid below its soft top fade in Glass and
+  Sheer. At 95% tint, bright text still showed faintly beside the workspace
+  and approval row under the composer.
+
 ## 0.3.2
 
 - Make the area behind the composer nearly opaque in Glass and Sheer (95%

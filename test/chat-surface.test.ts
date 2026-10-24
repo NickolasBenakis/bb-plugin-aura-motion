@@ -27,8 +27,8 @@ test("solid paints the column opaque; translucent modes clear it and blur under 
     assert.doesNotMatch(filtered, /backdrop-filter/);
     assert.match(css, /header:has\([^)]*\) \{ background:transparent;/);
     // Text scrolling under the composer must be hidden by tint, not only by blur.
-    const footerFill = Number(css.match(/\.mx-auto::before \{[^}]*?var\(--background\) (\d+)%/)?.[1]);
-    assert.ok(footerFill >= 95, `footer tint ${footerFill}% hides text scrolling under the composer`);
+    // Below its top fade, the footer tint is solid so no text shows beside the composer row.
+    assert.match(css, /\.mx-auto::before \{[^}]*background-color:var\(--background\);/);
     // BB's question card replaces the composer and is nearly transparent on its own.
     assert.match(css, /:is\(form\[data-promptbox\], \[data-testid="user-question-banner"\]\) \{/);
     for (const [selector, percent] of [[/form\[data-promptbox\][^{]*\{[^}]*/, 95], [/\.dark [^{]*form\[data-promptbox\][^{]*\{[^}]*/, 92]] as const) {
