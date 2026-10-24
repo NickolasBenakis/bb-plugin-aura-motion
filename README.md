@@ -116,6 +116,18 @@ bb plugin install . --yes
 bb plugin reload aura-motion
 ```
 
+## Releasing
+
+Pull requests and pushes to `main` run typecheck and tests in GitHub Actions.
+To release, bump `version` in `package.json` and add a matching `## X.Y.Z`
+section to `CHANGELOG.md` in your pull request. When it merges, the Release
+workflow runs the checks, tags `vX.Y.Z` and publishes a GitHub release with
+those notes. A merge without a version bump releases nothing.
+
+The BB marketplace entry tracks a semver range of these tags. While the plugin
+is 0.x, `^0.3.0` covers 0.3.x patches only; a new minor such as 0.4.0 needs a
+marketplace pull request that raises the range.
+
 ## CLI
 
 ```sh

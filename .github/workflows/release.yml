@@ -1,0 +1,71 @@
+name: Release
+
+# Tags and publishes a release whenever main has a package.json version
+# without a matching vX.Y.Z tag. The BB marketplace tracks those tags.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+      tagged: ${{ steps.read.outputs.tagged }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: read
+        run: |
+          version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+            echo "tagged=true" >> "$GITHUB_OUTPUT"
+            echo "v$version is already tagged; bump package.json to release." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "tagged=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  check:
+    needs: version
+    if: needs.version.outputs.tagged == 'false'
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: [version, check]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Tag the release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
+      - name: Publish release notes from the changelog
+        run: |
+          awk -v heading="## $VERSION" '$0 == heading { found = 1; next } /^## / && found { exit } found' CHANGELOG.md > notes.md
+          [ -s notes.md ] || echo "Release v$VERSION" > notes.md
+          gh release create "v$VERSION" --title "v$VERSION" --notes-file notes.md --verify-tag
+      - name: Summary
+        run: |
+          {
+            echo "Released v$VERSION."
+            echo
+            echo "BB users on the marketplace range pick this up as an update when it matches."
+            echo "For 0.x, a new minor (0.4.0) needs the marketplace entry range raised to ^0.4.0."
+          } >> "$GITHUB_STEP_SUMMARY"
