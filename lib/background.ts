@@ -111,6 +111,45 @@ export const COMPOSE_LAYOUT = `${COMPOSE_CENTER}
   }
 }
 `;
+// Phones: the same test BB uses for its touch sizing, so a narrow desktop
+// window driven by a mouse keeps the desktop look.
+export const PHONE_MEDIA = "(max-width:767px) and (pointer:coarse)";
+// On a phone the content covers the whole wallpaper, so New thread's recents
+// and project row get their own glass card instead of sitting on bare video,
+// and BB's opaque band around the composer clears so the wallpaper reads as
+// one picture. Sheer chats get Glass's fill: a bright frame behind a
+// full-width column otherwise washes out muted text.
+export const PHONE_LAYOUT = `
+@media ${PHONE_MEDIA} {
+  ${NEW_THREAD_TARGET} [data-testid="root-compose-compact-composer"] div.bg-background {
+    background-color:transparent;
+  }
+  ${NEW_THREAD_TARGET} [data-app-composer-role="primary"] > :last-child {
+    margin-top:8px; padding:4px 8px; border-radius:12px;
+    border:1px solid color-mix(in oklab,var(--border) 60%,transparent);
+    background:color-mix(in oklab,var(--background) 90%,transparent);
+    -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
+  }
+  ${NEW_THREAD_TARGET} [data-root-compose-mobile-recents] {
+    margin-bottom:16px; padding:6px 6px 8px; border-radius:18px;
+    border:1px solid color-mix(in oklab,var(--border) 60%,transparent);
+    background:color-mix(in oklab,var(--background) 90%,transparent);
+    box-shadow:0 10px 30px rgba(0,0,0,.25);
+    -webkit-backdrop-filter:blur(20px) saturate(.9);
+    backdrop-filter:blur(20px) saturate(.9);
+  }
+  ${NEW_THREAD_TARGET} [data-root-compose-mobile-recents] > :first-child {
+    position:static; padding-top:6px; background-color:transparent;
+  }
+  ${NEW_THREAD_TARGET} [data-root-compose-mobile-recents] [data-overflow-fade] { display:none; }
+  .aura-motion-capy-sheet[data-surface="sheer"] {
+    --aura-motion-sheet-fill:color-mix(in oklab,var(--background) 66%,transparent);
+  }
+  .dark .aura-motion-capy-sheet[data-surface="sheer"] {
+    --aura-motion-sheet-fill:color-mix(in oklab,var(--background) 60%,transparent);
+  }
+}
+`;
 // Paint for the chat reading column. Solid hides the wallpaper behind text.
 // Glass and Sheer leave the column clear: the capy layer draws a floating
 // sheet behind it, and the composer gets Apple's scroll-edge blur.
@@ -237,7 +276,7 @@ export function mountBackground(signal: AbortSignal): () => void {
   function apply(snapshot: Snapshot): void {
     current = snapshot;
     const target = targetsFor(snapshot);
-    const css = snapshot.settings.enabled ? `${backgroundRules(target)}\n${CAPY_CSS}\n${COMPOSE_LAYOUT}\n${snapshot.settings.newThreadOnly ? "" : readingSurface(snapshot.settings.chatSurface)}` : COMPOSE_CENTER;
+    const css = snapshot.settings.enabled ? `${backgroundRules(target)}\n${CAPY_CSS}\n${COMPOSE_LAYOUT}\n${PHONE_LAYOUT}\n${snapshot.settings.newThreadOnly ? "" : readingSurface(snapshot.settings.chatSurface)}` : COMPOSE_CENTER;
     if (css !== lastCss) { style.textContent = css; lastCss = css; }
     reconcile();
   }
