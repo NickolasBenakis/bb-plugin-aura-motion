@@ -135,13 +135,13 @@ ${PANEL} .thread-scrollbar:has(> div > .mx-auto) {
   -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 28px);
   mask-image:linear-gradient(to bottom,transparent 0,#000 28px);
 }
-/* Messages fade and blur as they pass under the composer. The tint does the
-   hiding: the blur alone is not enough where the browser limits its backdrop.
+/* Messages fade and blur as they pass under the composer. Below the 32px fade
+   the tint is solid: even 5% let bright text show beside the composer row.
    A pseudo-element carries both so fixed-position menus stay anchored. */
 ${FOOTER} { position:relative; isolation:isolate; }
 ${FOOTER}::before {
   content:""; position:absolute; inset:-32px 0 0; z-index:-1; pointer-events:none;
-  background-color:color-mix(in oklab,var(--background) 95%,transparent);
+  background-color:var(--background);
   -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
   -webkit-mask-image:linear-gradient(to bottom,transparent,#000 32px);
   mask-image:linear-gradient(to bottom,transparent,#000 32px);
