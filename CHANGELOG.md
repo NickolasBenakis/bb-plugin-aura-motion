@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.4
+
+- Make New thread readable on phones (the bb mobile app and phone browsers).
+  The Recent list and the project row sit on their own glass card instead of
+  bare wallpaper, and the opaque band around the composer clears so the
+  wallpaper shows as one picture.
+- On phones, Sheer chats use Glass's fill, so a bright video frame behind the
+  full-width message column no longer washes out muted text.
+- Phone rules use the same test BB uses for touch sizing
+  (`max-width: 767px` with a coarse pointer), so desktop, including a narrow
+  window driven by a mouse, looks exactly as before.
+
 ## 0.3.3
 
 - Make the area behind the composer solid below its soft top fade in Glass and

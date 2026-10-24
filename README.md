@@ -159,6 +159,11 @@ The New thread composer stays centered, with the optional overview below it.
 Short windows and long drafts remain scrollable. Background styling follows
 Aura Motion's enable/scope settings; composer centering stays independent of them.
 
+On phones (the bb mobile app or a phone browser), the New thread Recent list and
+project row sit on a frosted card, and Sheer chats use Glass's fill, so text
+stays readable when the wallpaper fills the screen. These rules use BB's own
+touch test (`max-width: 767px` with a coarse pointer); desktop is unchanged.
+
 ## Effect and verification
 
 The shader and fade masks come from [Capy](https://capy.ai/new). Source URLs and
