@@ -69,5 +69,9 @@
   "homepage": "https://github.com/NickolasBenakis/bb-plugin-aura-motion",
   "contributors": [
     "Mateo Cerquetella (original Aura plugin)"
-  ]
+  ],
+  "funding": {
+    "type": "buymeacoffee",
+    "url": "https://buymeacoffee.com/nikosbenakis"
+  }
 }

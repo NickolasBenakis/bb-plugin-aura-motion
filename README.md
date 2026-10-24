@@ -1,5 +1,7 @@
 # Aura Motion
 
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/nikosbenakis)
+
 Video, animated GIF and photo backgrounds for BB, with Capy's dithering effect, seven
 texture patterns, five photo motions, four dither styles, six saved slots, and an
 optional GitHub activity overview. Open **Settings → Aura Motion Motion**, or
@@ -199,3 +201,7 @@ auth/source failures, scoped queries, discovery bounds, cache expiry/coalescing,
 late responses, retry and disabled/empty/unavailable states. The component tests
 use the SDK's isolated slot harness; installed-host screenshots require a
 signed-in BB browser session.
+
+## Support
+
+If this plugin saves you time, you can [buy me a coffee](https://buymeacoffee.com/nikosbenakis).
