@@ -133,11 +133,13 @@ ${PANEL} .thread-scrollbar:has(> div > .mx-auto) {
   -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 28px);
   mask-image:linear-gradient(to bottom,transparent 0,#000 28px);
 }
-/* Messages blur progressively as they pass under the composer. A pseudo-element
-   carries the filter so fixed-position menus inside the composer stay anchored. */
+/* Messages fade and blur as they pass under the composer. The tint does the
+   hiding: the blur alone is not enough where the browser limits its backdrop.
+   A pseudo-element carries both so fixed-position menus stay anchored. */
 ${FOOTER} { position:relative; isolation:isolate; }
 ${FOOTER}::before {
   content:""; position:absolute; inset:-32px 0 0; z-index:-1; pointer-events:none;
+  background-color:color-mix(in oklab,var(--background) 72%,transparent);
   -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
   -webkit-mask-image:linear-gradient(to bottom,transparent,#000 32px);
   mask-image:linear-gradient(to bottom,transparent,#000 32px);
@@ -160,13 +162,13 @@ ${HEADER}::before {
    render in a portal outside the panel, so the filter cannot displace them. */
 ${PROMPT} {
   border-radius:18px; corner-shape:squircle;
-  background-color:color-mix(in oklab,var(--background) 70%,transparent);
+  background-color:color-mix(in oklab,var(--background) 90%,transparent);
   border-color:rgba(255,255,255,.6);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.7), 0 1px 2px rgba(0,0,0,.05), 0 10px 30px rgba(0,0,0,.12);
   -webkit-backdrop-filter:blur(24px) saturate(1.4); backdrop-filter:blur(24px) saturate(1.4);
 }
 .dark ${PROMPT} {
-  background-color:color-mix(in oklab,var(--background) 55%,transparent);
+  background-color:color-mix(in oklab,var(--background) 80%,transparent);
   border-color:rgba(255,255,255,.1);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 1px 2px rgba(0,0,0,.3), 0 12px 36px rgba(0,0,0,.4);
 }

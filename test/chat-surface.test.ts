@@ -26,6 +26,12 @@ test("solid paints the column opaque; translucent modes clear it and blur under 
     const filtered = css.replace(/::before \{[^}]*\}/g, "").replace(/form\[data-promptbox\][^{]*\{[^}]*\}/g, "");
     assert.doesNotMatch(filtered, /backdrop-filter/);
     assert.match(css, /header:has\([^)]*\) \{ background:transparent;/);
+    // Text scrolling under the composer must be hidden by tint, not only by blur.
+    assert.match(css, /\.mx-auto::before \{[^}]*background-color:color-mix\(in oklab,var\(--background\) 72%,transparent\)/);
+    for (const [selector, percent] of [[/form\[data-promptbox\] \{[^}]*/, 90], [/\.dark [^{]*form\[data-promptbox\] \{[^}]*/, 80]] as const) {
+      const fill = Number(css.match(selector)?.[0].match(/var\(--background\) (\d+)%/)?.[1]);
+      assert.ok(fill >= percent, `composer fill ${fill}% stays opaque enough to hide text behind it`);
+    }
   }
 });
 

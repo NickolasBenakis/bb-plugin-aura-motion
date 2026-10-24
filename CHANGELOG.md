@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.1
+
+- Hide messages that scroll under the composer in Glass and Sheer: the area
+  behind the composer gets a soft tint, and the composer capsule is more opaque
+  (90% light, 80% dark), so older text no longer shows through it.
+- Update the plugin overview for glass chats.
+- Add CI for pull requests and pushes to main, and release automation: merging
+  a version bump to main runs the checks, tags `vX.Y.Z` and publishes a GitHub
+  release with the changelog notes.
+
 ## 0.3.0
 
 - Add **Behind your messages** (Solid, Glass, Sheer): show the wallpaper, photo,
